@@ -304,53 +304,55 @@ export function AdminDashboard() {
 
       {/* Edit Modal */}
       {showEditModal && editingAppointment && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#1c2733] rounded-2xl p-6 max-w-sm w-full border border-[#242f3d]">
+        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-[#1c2733] rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-sm border-b sm:border border-[#242f3d] mb-safe">
             <h2 className="text-xl font-bold text-white mb-4 text-center">✏️ Редактировать запись</h2>
-            
-            <div className="mb-4">
-              <div className="text-[#6c7883] text-sm mb-2">Клиент:</div>
-              <div className="text-white font-semibold">{editingAppointment.client_name}</div>
+
+            <div className="space-y-4 max-h-[50vh] overflow-y-auto mb-4" style={{ scrollbarWidth: 'thin', scrollbarColor: '#242f3d transparent' }}>
+              <div className="mb-4">
+                <div className="text-[#6c7883] text-sm mb-2">Клиент:</div>
+                <div className="text-white font-semibold">{editingAppointment.client_name}</div>
+              </div>
+
+              <div className="mb-4">
+                <div className="text-[#6c7883] text-sm mb-2">Услуга:</div>
+                <div className="text-white">{editingAppointment.service}</div>
+              </div>
+
+              <div>
+                <label className="text-[#6c7883] text-sm mb-2 block">Дата:</label>
+                <input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[#6c7883] text-sm mb-2 block">Время:</label>
+                <select
+                  value={editTime}
+                  onChange={(e) => setEditTime(e.target.value)}
+                  className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {timeSlots.map(time => (
+                    <option key={time} value={time}>{time}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            
-            <div className="mb-4">
-              <div className="text-[#6c7883] text-sm mb-2">Услуга:</div>
-              <div className="text-white">{editingAppointment.service}</div>
-            </div>
-            
-            <div className="mb-4">
-              <label className="text-[#6c7883] text-sm mb-2 block">Дата:</label>
-              <input
-                type="date"
-                value={editDate}
-                onChange={(e) => setEditDate(e.target.value)}
-                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            
-            <div className="mb-6">
-              <label className="text-[#6c7883] text-sm mb-2 block">Время:</label>
-              <select
-                value={editTime}
-                onChange={(e) => setEditTime(e.target.value)}
-                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {timeSlots.map(time => (
-                  <option key={time} value={time}>{time}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="flex gap-3">
+
+            <div className="flex gap-3 sticky bottom-0 pt-4 bg-[#1c2733] border-t border-[#242f3d]">
               <button
                 onClick={handleSaveEdit}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl transition-all"
               >
                 💾 Сохранить
               </button>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-3 rounded-xl transition-all"
+                className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-4 rounded-xl transition-all"
               >
                 Отмена
               </button>
@@ -361,78 +363,80 @@ export function AdminDashboard() {
 
       {/* Schedule Block Modal */}
       {showScheduleModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#1c2733] rounded-2xl p-6 max-w-sm w-full border border-[#242f3d]">
+        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-[#1c2733] rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-sm border-b sm:border border-[#242f3d] mb-safe">
             <h2 className="text-xl font-bold text-white mb-4 text-center">🚫 Заблокировать время</h2>
             <p className="text-[#6c7883] text-sm mb-4 text-center">Запись по телефону или другое событие</p>
             
-            <div className="mb-4">
-              <label className="text-[#6c7883] text-sm mb-2 block">Дата:</label>
-              <input
-                type="date"
-                value={scheduleDate}
-                onChange={(e) => setScheduleDate(e.target.value)}
-                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto mb-4" style={{ scrollbarWidth: 'thin', scrollbarColor: '#242f3d transparent' }}>
+              <div>
+                <label className="text-[#6c7883] text-sm mb-2 block">Дата:</label>
+                <input
+                  type="date"
+                  value={scheduleDate}
+                  onChange={(e) => setScheduleDate(e.target.value)}
+                  className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              
+              <div>
+                <label className="text-[#6c7883] text-sm mb-2 block">Время:</label>
+                <select
+                  value={scheduleTime}
+                  onChange={(e) => setScheduleTime(e.target.value)}
+                  className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">Выберите время</option>
+                  {timeSlots.map(time => (
+                    <option key={time} value={time}>{time}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="text-[#6c7883] text-sm mb-2 block">Причина:</label>
+                <input
+                  type="text"
+                  value={scheduleReason}
+                  onChange={(e) => setScheduleReason(e.target.value)}
+                  placeholder="Запись по телефону"
+                  className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              
+              <div>
+                <label className="text-[#6c7883] text-sm mb-2 block">Имя клиента:</label>
+                <input
+                  type="text"
+                  value={scheduleClient.name}
+                  onChange={(e) => setScheduleClient({ ...scheduleClient, name: e.target.value })}
+                  placeholder="Иван"
+                  className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              
+              <div>
+                <label className="text-[#6c7883] text-sm mb-2 block">Телефон:</label>
+                <input
+                  type="tel"
+                  value={scheduleClient.phone}
+                  onChange={(e) => setScheduleClient({ ...scheduleClient, phone: e.target.value })}
+                  placeholder="+7 (999) 000-00-00"
+                  className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
             </div>
             
-            <div className="mb-4">
-              <label className="text-[#6c7883] text-sm mb-2 block">Время:</label>
-              <select
-                value={scheduleTime}
-                onChange={(e) => setScheduleTime(e.target.value)}
-                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="">Выберите время</option>
-                {timeSlots.map(time => (
-                  <option key={time} value={time}>{time}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="mb-4">
-              <label className="text-[#6c7883] text-sm mb-2 block">Причина:</label>
-              <input
-                type="text"
-                value={scheduleReason}
-                onChange={(e) => setScheduleReason(e.target.value)}
-                placeholder="Запись по телефону"
-                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            
-            <div className="mb-4">
-              <label className="text-[#6c7883] text-sm mb-2 block">Имя клиента:</label>
-              <input
-                type="text"
-                value={scheduleClient.name}
-                onChange={(e) => setScheduleClient({ ...scheduleClient, name: e.target.value })}
-                placeholder="Иван"
-                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            
-            <div className="mb-6">
-              <label className="text-[#6c7883] text-sm mb-2 block">Телефон:</label>
-              <input
-                type="tel"
-                value={scheduleClient.phone}
-                onChange={(e) => setScheduleClient({ ...scheduleClient, phone: e.target.value })}
-                placeholder="+7 (999) 000-00-00"
-                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            
-            <div className="flex gap-3">
+            <div className="flex gap-3 sticky bottom-0 pt-4 bg-[#1c2733] border-t border-[#242f3d]">
               <button
                 onClick={handleBlockTime}
-                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 rounded-xl transition-all"
+                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-4 rounded-xl transition-all"
               >
                 🚫 Заблокировать
               </button>
               <button
                 onClick={() => setShowScheduleModal(false)}
-                className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-3 rounded-xl transition-all"
+                className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-4 rounded-xl transition-all"
               >
                 Отмена
               </button>
