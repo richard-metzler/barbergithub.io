@@ -2,7 +2,7 @@ export interface Service {
   id: string;
   name: string;
   price: number;
-  duration: number; // minutes
+  duration: number;
   emoji: string;
 }
 
@@ -12,6 +12,7 @@ export interface Master {
   avatar: string;
   specialty: string;
   rating: number;
+  telegram_chat_id?: number;
 }
 
 export const services: Service[] = [
@@ -25,11 +26,9 @@ export const services: Service[] = [
   { id: 's8', name: 'Камуфляж седины', price: 1800, duration: 45, emoji: '🖌️' },
 ];
 
-export const masters: Master[] = [
+// Мастера по умолчанию (если API недоступен)
+export const defaultMasters: Master[] = [
   { id: 'm1', name: 'Алексей', avatar: '👨‍🎨', specialty: 'Топ-барбер', rating: 4.9 },
-  { id: 'm2', name: 'Мария', avatar: '👩‍🎨', specialty: 'Стилист-колорист', rating: 4.8 },
-  { id: 'm3', name: 'Дмитрий', avatar: '🧑‍🎨', specialty: 'Барбер', rating: 4.7 },
-  { id: 'm4', name: 'Елена', avatar: '👩‍💼', specialty: 'Стилист', rating: 4.9 },
 ];
 
 export const timeSlots = [
@@ -40,7 +39,6 @@ export const timeSlots = [
 ];
 
 export function getAvailableSlots(_masterId: string, _dateStr: string): string[] {
-  // Simulate some slots being taken
   const seed = _masterId.charCodeAt(1) + _dateStr.charCodeAt(_dateStr.length - 1);
   return timeSlots.filter((_, i) => (i + seed) % 3 !== 0);
 }
@@ -65,4 +63,20 @@ export function formatDate(date: Date): string {
 export function formatDateFull(date: Date): string {
   const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+// Загрузка мастеров из API
+export async function loadMasters(): Promise<Master[]> {
+  try {
+    const API_URL = import.meta.env.VITE_API_URL || '';
+    if (!API_URL) return defaultMasters;
+    
+    const response = await fetch(`${API_URL}/api/get-bookings`);
+    if (!response.ok) return defaultMasters;
+    
+    // Это заглушка - в идеале нужен отдельный endpoint /api/masters
+    return defaultMasters;
+  } catch {
+    return defaultMasters;
+  }
 }

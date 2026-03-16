@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  services, masters, getAvailableSlots, getNextDays, formatDate, formatDateFull,
+  services, defaultMasters, getAvailableSlots, getNextDays, formatDate, formatDateFull,
   type Service, type Master,
 } from './data';
 import { useTelegram } from './useTelegram';
@@ -22,7 +22,7 @@ function createMsg(text: string, sender: 'bot' | 'user', widget?: Step): Message
 
 export function ChatBot() {
   const { init, getUserName, getUserId, hapticFeedback, sendData, close, isTelegram } = useTelegram();
-  
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [step, setStep] = useState<Step>('welcome');
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -33,9 +33,23 @@ export function ChatBot() {
   const [clientPhone, setClientPhone] = useState('');
   const [wantNotification, setWantNotification] = useState<boolean>(true);
   const [isTyping, setIsTyping] = useState(false);
-  
+  const [masters, setMasters] = useState<Master[]>(defaultMasters);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Загрузка мастеров из API
+  useEffect(() => {
+    const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
+    fetch(`${API_URL}/api/masters`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.masters && data.masters.length > 0) {
+          setMasters(data.masters);
+        }
+      })
+      .catch(() => console.log('Using default masters'));
+  }, []);
 
   // Инициализация Telegram WebApp
   useEffect(() => {
