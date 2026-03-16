@@ -18,12 +18,23 @@ interface Appointment {
   reminder_sent: boolean;
 }
 
+const timeSlots = [
+  '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+  '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+  '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
+  '18:00', '18:30', '19:00', '19:30', '20:00',
+];
+
 export function AdminDashboard() {
   const navigate = useNavigate();
   const { getUserId, close } = useTelegram();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [masterId, setMasterId] = useState<string>('');
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editDate, setEditDate] = useState('');
+  const [editTime, setEditTime] = useState('');
 
   const API_URL = (import.meta as any).env?.VITE_API_URL || window.location.origin;
 
@@ -65,6 +76,42 @@ export function AdminDashboard() {
         ));
       })
       .catch(err => console.error('Failed to update:', err));
+  };
+
+  const handleEditAppointment = (app: Appointment) => {
+    setEditingAppointment(app);
+    setEditDate(app.date);
+    setEditTime(app.time);
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingAppointment) return;
+    
+    try {
+      const response = await fetch(`${API_URL}/api/admin-bookings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingAppointment.id,
+          date: editDate,
+          time: editTime
+        }),
+      });
+      
+      if (response.ok) {
+        setAppointments(appointments.map(app =>
+          app.id === editingAppointment.id 
+            ? { ...app, date: editDate, time: editTime }
+            : app
+        ));
+        setShowEditModal(false);
+      } else {
+        alert('Ошибка обновления');
+      }
+    } catch (error) {
+      alert('Ошибка обновления');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -166,6 +213,15 @@ export function AdminDashboard() {
                   </div>
                 </div>
 
+                <div className="flex gap-2 mb-2">
+                  <button
+                    onClick={() => handleEditAppointment(app)}
+                    className="flex-1 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 py-2 rounded-lg text-sm transition-colors"
+                  >
+                    ✏️ Изменить
+                  </button>
+                </div>
+
                 {app.status === 'pending' && (
                   <div className="flex gap-2">
                     <button
@@ -187,6 +243,63 @@ export function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Edit Modal */}
+      {showEditModal && editingAppointment && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#1c2733] rounded-2xl p-6 max-w-sm w-full border border-[#242f3d]">
+            <h2 className="text-xl font-bold text-white mb-4 text-center">✏️ Редактировать запись</h2>
+            
+            <div className="mb-4">
+              <div className="text-[#6c7883] text-sm mb-2">Клиент:</div>
+              <div className="text-white font-semibold">{editingAppointment.client_name}</div>
+            </div>
+            
+            <div className="mb-4">
+              <div className="text-[#6c7883] text-sm mb-2">Услуга:</div>
+              <div className="text-white">{editingAppointment.service}</div>
+            </div>
+            
+            <div className="mb-4">
+              <label className="text-[#6c7883] text-sm mb-2 block">Дата:</label>
+              <input
+                type="date"
+                value={editDate}
+                onChange={(e) => setEditDate(e.target.value)}
+                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div className="mb-6">
+              <label className="text-[#6c7883] text-sm mb-2 block">Время:</label>
+              <select
+                value={editTime}
+                onChange={(e) => setEditTime(e.target.value)}
+                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {timeSlots.map(time => (
+                  <option key={time} value={time}>{time}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={handleSaveEdit}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all"
+              >
+                💾 Сохранить
+              </button>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-3 rounded-xl transition-all"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

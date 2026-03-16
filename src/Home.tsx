@@ -10,6 +10,9 @@ export function Home() {
   
   const [role, setRole] = useState<UserRole>('loading');
   const [lastBooking, setLastBooking] = useState<any>(null);
+  const [showRoleSelect, setShowRoleSelect] = useState(false);
+
+  const SUPERADMIN_ID = '1362609452';
 
   // Инициализация
   useEffect(() => {
@@ -31,14 +34,15 @@ export function Home() {
       .then(data => {
         setRole(data.role || 'client');
         
-        // Для суперадмина и мастеров - показываем кнопку панели
-        if (data.role === 'superadmin' || data.role === 'master') {
-          showMainButton('📊 Панель управления', () => {
-            if (data.role === 'superadmin') {
-              navigate('/superadmin');
-            } else {
-              navigate('/admin');
-            }
+        // Для суперадмина показываем выбор роли
+        if (data.role === 'superadmin' && userId.toString() === SUPERADMIN_ID) {
+          setShowRoleSelect(true);
+        }
+        
+        // Для мастеров - показываем кнопку панели
+        if (data.role === 'master') {
+          showMainButton('📊 Панель мастера', () => {
+            navigate('/admin');
           });
         }
       })
@@ -52,7 +56,8 @@ export function Home() {
     if (role === 'master') {
       navigate('/admin');
     } else if (role === 'superadmin') {
-      navigate('/superadmin');
+      // Суперадмин выбирает роль
+      setShowRoleSelect(true);
     } else {
       // Клиент - начинаем запись
       navigate('/booking');
@@ -187,6 +192,53 @@ export function Home() {
           {role === 'superadmin' && 'Полный доступ ко всем функциям'}
         </div>
       </div>
+
+      {/* Modal выбора роли для суперадмина */}
+      {showRoleSelect && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#1c2733] rounded-2xl p-6 max-w-sm w-full border border-[#242f3d]">
+            <h2 className="text-xl font-bold text-white mb-2 text-center">Выберите режим</h2>
+            <p className="text-[#6c7883] text-sm mb-6 text-center">Как вы хотите войти?</p>
+            
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setShowRoleSelect(false);
+                  navigate('/admin');
+                }}
+                className="w-full bg-[#2b5278] hover:bg-[#326292] text-white font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-3"
+              >
+                <span className="text-2xl">👨‍🎨</span>
+                <div className="text-left">
+                  <div className="font-bold">Мастер</div>
+                  <div className="text-xs text-blue-200">Панель мастера</div>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowRoleSelect(false);
+                  navigate('/superadmin');
+                }}
+                className="w-full bg-[#2b5278] hover:bg-[#326292] text-white font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-3"
+              >
+                <span className="text-2xl">👑</span>
+                <div className="text-left">
+                  <div className="font-bold">Суперадмин</div>
+                  <div className="text-xs text-blue-200">Полный доступ</div>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => setShowRoleSelect(false)}
+                className="w-full bg-[#242f3d] hover:bg-[#2b3848] text-[#6c7883] font-semibold py-3 rounded-xl transition-all mt-4"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
