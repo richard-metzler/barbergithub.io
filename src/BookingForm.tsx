@@ -20,13 +20,38 @@ export function BookingForm() {
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Загружаемые данные из API
+  const [services, setServices] = useState<Service[]>([]);
+  const [masters, setMasters] = useState<Master[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const API_URL = (import.meta as any).env?.VITE_API_URL || window.location.origin;
 
+  // Загрузка услуг и мастеров из API
   useEffect(() => {
     init();
     const tgName = getUserName();
     if (tgName) setClientName(tgName);
+
+    // Загружаем услуги и мастеров из Supabase
+    Promise.all([
+      fetch(`${API_URL}/api/masters`).then(r => r.json()),
+      // Услуги пока из локального файла (можно добавить API endpoint)
+      import('./data').then(d => d.services),
+    ]).then(([mastersData, servicesData]) => {
+      setMasters(mastersData.masters || []);
+      setServices(servicesData);
+      setLoading(false);
+    }).catch(() => {
+      // Fallback на локальные данные
+      import('./data').then(d => {
+        setServices(d.services);
+        setMasters(d.defaultMasters);
+        setLoading(false);
+      });
+    });
   }, []);
 
   const handleSelectService = (service: Service) => {
@@ -109,6 +134,14 @@ export function BookingForm() {
     else if (step === 'confirm') setStep('phone');
     else if (step === 'done') navigate('/');
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0e1621] flex items-center justify-center">
+        <div className="text-white text-lg">Загрузка...</div>
+      </div>
+    );
+  }
 
   const availableDays = getNextDays(14);
   const availableSlots = selectedMaster && selectedDate
