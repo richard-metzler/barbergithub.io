@@ -1,18 +1,19 @@
+import TelegramBot from 'node-telegram-bot-api';
+
 export default async function handler(req, res) {
-  // Debug
-  console.log('BOT_TOKEN:', !!process.env.BOT_TOKEN);
+  console.log('BOT_TOKEN exists:', !!process.env.BOT_TOKEN);
   
   if (!process.env.BOT_TOKEN) {
     return res.status(500).json({ error: 'BOT_TOKEN missing' });
   }
   
   try {
-    const TelegramBot = await import('node-telegram-bot-api');
-    const bot = new TelegramBot(process.env.BOT_TOKEN);
+    const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: false });
+    const body = req.body;
     
-    if (req.body?.message) {
-      const chatId = req.body.message.chat.id;
-      const text = req.body.message.text || '';
+    if (body?.message) {
+      const chatId = body.message.chat.id;
+      const text = body.message.text || '';
       
       if (text === '/start') {
         await bot.sendMessage(chatId, 
