@@ -24,15 +24,9 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Проверяем callback query (inline кнопки)
-    if (body.callback_query) {
-      const callbackQuery = body.callback_query;
-      // Обрабатываем нажатия на кнопки, если нужно
-    }
-
-    res.status(200).send('OK');
+    res.status(200).json({ ok: true });
   } catch (error) {
     console.error('Webhook error:', error);
-    res.status(500).send('Error');
+    res.status(200).json({ ok: true });
   }
 };
