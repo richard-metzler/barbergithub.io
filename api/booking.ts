@@ -112,16 +112,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Отправка уведомления мастеру
     if (botToken && booking.masterId) {
       try {
-        const notifyUrl = `${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : ''}/api/notify-master`;
+        const supabase = createClient(supabaseUrl, supabaseKey);
         
-        await fetch(notifyUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            booking,
-            masterId: booking.masterId,
-          }),
-        });
+        // Получаем chat_id мастера
+        const { data: master } = await supabase
+          .from('masters')
+          .select('telegram_chat_id, name')
+          .eq('id', booking.masterId)
+          .single();
+
+        if (master && master.telegram_chat_id) {
+          const message = `🔔 *Новая запись!*\n\n` +
+            `📅 ${formatDate(booking.date)} в ${booking.time}\n` +
+            `✂️ Услуга: ${booking.service}\n` +
+            `💰 ${booking.servicePrice} ₽\n\n` +
+            `👤 Клиент: ${booking.clientName}\n` +
+            `📞 ${booking.clientPhone}\n\n` +
+            `Вы: ${master.name}`;
+
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: master.telegram_chat_id,
+              text: message,
+              parse_mode: 'Markdown',
+            }),
+          });
+          console.log('Master notified:', master.telegram_chat_id);
+        } else {
+          console.log('Master chat_id not found for:', booking.masterId);
+        }
       } catch (masterError) {
         console.error('Master notification error:', masterError);
       }
