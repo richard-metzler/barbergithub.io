@@ -5,7 +5,7 @@ import {
 } from './data';
 import { useTelegram } from './useTelegram';
 
-type Step = 'welcome' | 'services' | 'master' | 'date' | 'time' | 'name' | 'phone' | 'notification' | 'confirm' | 'done';
+type Step = 'welcome' | 'services' | 'master' | 'date' | 'time' | 'name' | 'phone' | 'notification' | 'confirm' | 'done' | 'admin_button';
 
 interface Message {
   id: number;
@@ -93,6 +93,11 @@ export function ChatBot() {
         addBotMessage('Помогу вам записаться на стрижку быстро и удобно. Выберите услугу:', 'services');
         setStep('services');
       }, 1200);
+      
+      // Добавляем кнопку для мастера через 2 секунды
+      setTimeout(() => {
+        addBotMessage('👨‍💼 Вы мастер? Откройте панель управления:', 'admin_button');
+      }, 2000);
     }
   }, []);
 
@@ -272,26 +277,6 @@ export function ChatBot() {
             онлайн
           </div>
         </div>
-        <button
-          onClick={() => {
-            const adminUrl = `${window.location.origin}/admin`;
-            if (isTelegram) {
-              sendData({ action: 'open_admin', url: adminUrl });
-              window.Telegram.WebApp.openLink(adminUrl);
-            } else {
-              window.open(adminUrl, '_blank');
-            }
-          }}
-          className="text-[#6c7883] hover:text-white transition-colors p-2 rounded-lg hover:bg-[#242f3d]"
-          title="Панель мастера"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-          </svg>
-        </button>
         <button
           onClick={handleRestart}
           className="text-[#6c7883] hover:text-white transition-colors p-2 rounded-lg hover:bg-[#242f3d]"
@@ -483,6 +468,31 @@ export function ChatBot() {
                     Закрыть
                   </button>
                 )}
+              </div>
+            )}
+
+            {/* Admin Button Widget */}
+            {msg.sender === 'bot' && msg.widget === 'admin_button' && (
+              <div className="mt-2 animate-fade-in-up">
+                <button
+                  onClick={() => {
+                    const adminUrl = `${window.location.origin}/admin`;
+                    if (isTelegram && window.Telegram?.WebApp) {
+                      window.Telegram.WebApp.openLink(adminUrl);
+                    } else {
+                      window.open(adminUrl, '_blank');
+                    }
+                  }}
+                  className="w-full bg-[#2b5278] hover:bg-[#326292] text-white font-semibold py-3 rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                  </svg>
+                  Открыть панель мастера
+                </button>
               </div>
             )}
           </div>
