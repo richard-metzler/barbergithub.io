@@ -22,23 +22,28 @@ export function Home() {
   // Определение роли пользователя
   useEffect(() => {
     const userId = getUserId();
+    console.log('Home.tsx: userId =', userId);
+    console.log('Home.tsx: SUPERADMIN_ID =', SUPERADMIN_ID);
+    
     if (!userId) {
       setRole('client');
       return;
     }
 
     const API_URL = (import.meta as any).env?.VITE_API_URL || window.location.origin;
-    
+
     fetch(`${API_URL}/api/get-user-role?userId=${userId}`)
       .then(r => r.json())
       .then(data => {
+        console.log('Home.tsx: API response =', data);
         setRole(data.role || 'client');
-        
+
         // Для суперадмина показываем выбор роли
-        if (data.role === 'superadmin' && userId.toString() === SUPERADMIN_ID) {
+        if (data.role === 'superadmin') {
+          console.log('Home.tsx: Setting showRoleSelect = true');
           setShowRoleSelect(true);
         }
-        
+
         // Для мастеров - показываем кнопку панели
         if (data.role === 'master') {
           showMainButton('📊 Панель мастера', () => {
@@ -46,7 +51,8 @@ export function Home() {
           });
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Home.tsx: Error fetching role:', err);
         setRole('client');
       });
   }, [getUserId]);
