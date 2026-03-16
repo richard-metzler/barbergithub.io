@@ -66,7 +66,7 @@ export function ChatBot() {
   // Проверка, является ли пользователь мастером
   useEffect(() => {
     const userId = getUserId();
-    if (userId && !isMaster && !adminButtonShownRef.current) {
+    if (userId && !adminButtonShownRef.current) {
       adminButtonShownRef.current = true;
       const API_URL = (import.meta as any).env?.VITE_API_URL || window.location.origin;
       fetch(`${API_URL}/api/masters`)
@@ -74,9 +74,8 @@ export function ChatBot() {
         .then(data => {
           const isUserMaster = data.masters?.some((m: Master) => m.telegram_chat_id === userId);
           if (isUserMaster) {
-            setIsMaster(true);
             setTimeout(() => {
-              addBotMessage('👨‍💼 Вы мастер? Откройте панель управления:', 'admin_button');
+              setMessages(prev => [...prev, createMsg('👨‍💼 Вы мастер? Откройте панель управления:', 'bot', 'admin_button')]);
             }, 2000);
           }
 
@@ -90,7 +89,7 @@ export function ChatBot() {
           setMasters(defaultMasters);
         });
     }
-  }, [getUserId, addBotMessage]);
+  }, [getUserId]);
 
   // Инициализация Telegram WebApp
   useEffect(() => {
