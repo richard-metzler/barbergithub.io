@@ -45,6 +45,8 @@ export function SuperAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showAddMasterModal, setShowAddMasterModal] = useState(false);
+  const [newMaster, setNewMaster] = useState({ name: '', avatar: '👨‍🎨', specialty: 'Барбер', rating: 5.0, telegram_chat_id: '' });
 
   const API_URL = (import.meta as any).env?.VITE_API_URL || window.location.origin;
 
@@ -125,6 +127,50 @@ export function SuperAdminDashboard() {
       }
     } catch (error) {
       alert('Ошибка обновления');
+    }
+  };
+
+  // Добавление мастера
+  const handleAddMaster = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin-masters`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newMaster,
+          id: 'm' + Date.now(),
+          telegram_chat_id: newMaster.telegram_chat_id ? parseInt(newMaster.telegram_chat_id) : null,
+        }),
+      });
+      
+      if (response.ok) {
+        loadData();
+        setShowAddMasterModal(false);
+        setNewMaster({ name: '', avatar: '👨‍🎨', specialty: 'Барбер', rating: 5.0, telegram_chat_id: '' });
+      } else {
+        alert('Ошибка добавления');
+      }
+    } catch (error) {
+      alert('Ошибка добавления');
+    }
+  };
+
+  // Удаление мастера
+  const handleDeleteMaster = async (id: string) => {
+    if (!confirm('Удалить мастера?')) return;
+    
+    try {
+      const response = await fetch(`${API_URL}/api/admin-masters?id=${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        loadData();
+      } else {
+        alert('Ошибка удаления');
+      }
+    } catch (error) {
+      alert('Ошибка удаления');
     }
   };
 
@@ -273,19 +319,38 @@ export function SuperAdminDashboard() {
         {/* Masters Tab */}
         {activeTab === 'masters' && (
           <div className="space-y-3">
+            <button
+              onClick={() => setShowAddMasterModal(true)}
+              className="w-full bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-600/30 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+            >
+              <span className="text-xl">➕</span>
+              Добавить мастера
+            </button>
+            
             {masters.map(master => (
               <div key={master.id} className="bg-[#242f3d] rounded-xl p-4 flex items-center gap-4">
                 <div className="text-4xl">{master.avatar}</div>
                 <div className="flex-1">
                   <div className="font-bold text-white">{master.name}</div>
                   <div className="text-sm text-[#8b9bb4]">{master.specialty}</div>
+                  {master.telegram_chat_id && (
+                    <div className="text-xs text-blue-400 mt-1">TG ID: {master.telegram_chat_id}</div>
+                  )}
                 </div>
-                <button
-                  onClick={() => { setEditingItem(master); setShowEditModal(true); }}
-                  className="bg-blue-600/20 text-blue-400 px-3 py-2 rounded-lg text-sm"
-                >
-                  ✏️
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { setEditingItem(master); setShowEditModal(true); }}
+                    className="bg-blue-600/20 text-blue-400 px-3 py-2 rounded-lg text-sm"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => handleDeleteMaster(master.id)}
+                    className="bg-red-600/20 text-red-400 px-3 py-2 rounded-lg text-sm"
+                  >
+                    🗑️
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -350,6 +415,89 @@ export function SuperAdminDashboard() {
               <button
                 onClick={() => setShowEditModal(false)}
                 className="flex-1 bg-[#242f3d] text-white py-2 rounded-lg"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Master Modal */}
+      {showAddMasterModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#1c2733] rounded-2xl p-6 max-w-sm w-full border border-[#242f3d]">
+            <h2 className="text-xl font-bold text-white mb-4 text-center">➕ Добавить мастера</h2>
+            
+            <div className="mb-4">
+              <label className="text-[#6c7883] text-sm mb-2 block">Имя:</label>
+              <input
+                type="text"
+                value={newMaster.name}
+                onChange={(e) => setNewMaster({ ...newMaster, name: e.target.value })}
+                placeholder="Алексей"
+                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="text-[#6c7883] text-sm mb-2 block">Аватар:</label>
+              <input
+                type="text"
+                value={newMaster.avatar}
+                onChange={(e) => setNewMaster({ ...newMaster, avatar: e.target.value })}
+                placeholder="👨‍🎨"
+                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="text-[#6c7883] text-sm mb-2 block">Специальность:</label>
+              <input
+                type="text"
+                value={newMaster.specialty}
+                onChange={(e) => setNewMaster({ ...newMaster, specialty: e.target.value })}
+                placeholder="Топ-барбер"
+                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="text-[#6c7883] text-sm mb-2 block">Рейтинг:</label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="5"
+                value={newMaster.rating}
+                onChange={(e) => setNewMaster({ ...newMaster, rating: parseFloat(e.target.value) })}
+                placeholder="5.0"
+                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div className="mb-6">
+              <label className="text-[#6c7883] text-sm mb-2 block">Telegram ID:</label>
+              <input
+                type="text"
+                value={newMaster.telegram_chat_id}
+                onChange={(e) => setNewMaster({ ...newMaster, telegram_chat_id: e.target.value })}
+                placeholder="1362609452"
+                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-[#6c7883] mt-1">Оставьте пустым если не нужно</p>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={handleAddMaster}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition-all"
+              >
+                ➕ Добавить
+              </button>
+              <button
+                onClick={() => setShowAddMasterModal(false)}
+                className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-3 rounded-xl transition-all"
               >
                 Отмена
               </button>
