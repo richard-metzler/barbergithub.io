@@ -442,175 +442,177 @@ export function SuperAdminDashboard() {
 
       {/* Edit Modal */}
       {showEditModal && editingItem && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#1c2733] rounded-2xl p-6 max-w-md w-full border border-[#242f3d]">
-            <h3 className="text-xl font-bold text-white mb-6 text-center">
+        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+          <div className="bg-[#1c2733] rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md border-b sm:border border-[#242f3d] mb-safe max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold text-white mb-6 text-center sticky top-0 bg-[#1c2733] pb-4">
               {activeTab === 'bookings' && '✏️ Редактирование записи'}
               {activeTab === 'masters' && '✏️ Редактирование мастера'}
               {activeTab === 'services' && '✏️ Редактирование услуги'}
             </h3>
 
-            {/* Записи */}
-            {activeTab === 'bookings' && (
-              <div className="space-y-4">
-                <div>
-                  <label className="text-[#6c7883] text-sm mb-2 block">Клиент:</label>
-                  <input
-                    type="text"
-                    value={editFormData.client_name || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, client_name: e.target.value })}
-                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="text-[#6c7883] text-sm mb-2 block">Телефон:</label>
-                  <input
-                    type="text"
-                    value={editFormData.client_phone || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, client_phone: e.target.value })}
-                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="text-[#6c7883] text-sm mb-2 block">Дата:</label>
-                  <input
-                    type="date"
-                    value={editFormData.date || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, date: e.target.value })}
-                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="text-[#6c7883] text-sm mb-2 block">Время:</label>
-                  <input
-                    type="time"
-                    value={editFormData.time || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, time: e.target.value })}
-                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="text-[#6c7883] text-sm mb-2 block">Статус:</label>
-                  <select
-                    value={editFormData.status || 'pending'}
-                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
-                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
-                  >
-                    <option value="pending">Ожидается</option>
-                    <option value="confirmed">Подтверждено</option>
-                    <option value="completed">Выполнено</option>
-                    <option value="canceled">Отменено</option>
-                  </select>
-                </div>
-              </div>
-            )}
+            <div className="space-y-4 mb-4">
+              {/* Записи */}
+              {activeTab === 'bookings' && (
+                <>
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Клиент:</label>
+                    <input
+                      type="text"
+                      value={editFormData.client_name || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, client_name: e.target.value })}
+                      className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Телефон:</label>
+                    <input
+                      type="text"
+                      value={editFormData.client_phone || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, client_phone: e.target.value })}
+                      className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Дата:</label>
+                    <input
+                      type="date"
+                      value={editFormData.date || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, date: e.target.value })}
+                      className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Время:</label>
+                    <input
+                      type="time"
+                      value={editFormData.time || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, time: e.target.value })}
+                      className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Статус:</label>
+                    <select
+                      value={editFormData.status || 'pending'}
+                      onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                      className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                    >
+                      <option value="pending">Ожидается</option>
+                      <option value="confirmed">Подтверждено</option>
+                      <option value="completed">Выполнено</option>
+                      <option value="canceled">Отменено</option>
+                    </select>
+                  </div>
+                </>
+              )}
 
-            {/* Мастера */}
-            {activeTab === 'masters' && (
-              <div className="space-y-4">
-                <div>
-                  <label className="text-[#6c7883] text-sm mb-2 block">Имя:</label>
-                  <input
-                    type="text"
-                    value={editFormData.name || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="text-[#6c7883] text-sm mb-2 block">Аватар:</label>
-                  <input
-                    type="text"
-                    value={editFormData.avatar || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, avatar: e.target.value })}
-                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="text-[#6c7883] text-sm mb-2 block">Специальность:</label>
-                  <input
-                    type="text"
-                    value={editFormData.specialty || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, specialty: e.target.value })}
-                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="text-[#6c7883] text-sm mb-2 block">Рейтинг:</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="5"
-                    value={editFormData.rating || 5}
-                    onChange={(e) => setEditFormData({ ...editFormData, rating: parseFloat(e.target.value) })}
-                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="text-[#6c7883] text-sm mb-2 block">Telegram ID:</label>
-                  <input
-                    type="text"
-                    value={editFormData.telegram_chat_id || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, telegram_chat_id: e.target.value })}
-                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
-                  />
-                </div>
-              </div>
-            )}
+              {/* Мастера */}
+              {activeTab === 'masters' && (
+                <>
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Имя:</label>
+                    <input
+                      type="text"
+                      value={editFormData.name || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                      className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Аватар:</label>
+                    <input
+                      type="text"
+                      value={editFormData.avatar || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, avatar: e.target.value })}
+                      className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Специальность:</label>
+                    <input
+                      type="text"
+                      value={editFormData.specialty || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, specialty: e.target.value })}
+                      className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Рейтинг:</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="5"
+                      value={editFormData.rating || 5}
+                      onChange={(e) => setEditFormData({ ...editFormData, rating: parseFloat(e.target.value) })}
+                      className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Telegram ID:</label>
+                    <input
+                      type="text"
+                      value={editFormData.telegram_chat_id || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, telegram_chat_id: e.target.value })}
+                      className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                    />
+                  </div>
+                </>
+              )}
 
-            {/* Услуги */}
-            {activeTab === 'services' && (
-              <div className="space-y-4">
-                <div>
-                  <label className="text-[#6c7883] text-sm mb-2 block">Название:</label>
-                  <input
-                    type="text"
-                    value={editFormData.name || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="text-[#6c7883] text-sm mb-2 block">Цена (₽):</label>
-                  <input
-                    type="number"
-                    value={editFormData.price || 0}
-                    onChange={(e) => setEditFormData({ ...editFormData, price: parseInt(e.target.value) })}
-                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="text-[#6c7883] text-sm mb-2 block">Длительность (мин):</label>
-                  <input
-                    type="number"
-                    value={editFormData.duration || 30}
-                    onChange={(e) => setEditFormData({ ...editFormData, duration: parseInt(e.target.value) })}
-                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="text-[#6c7883] text-sm mb-2 block">Emoji:</label>
-                  <input
-                    type="text"
-                    value={editFormData.emoji || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, emoji: e.target.value })}
-                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
-                  />
-                </div>
-              </div>
-            )}
+              {/* Услуги */}
+              {activeTab === 'services' && (
+                <>
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Название:</label>
+                    <input
+                      type="text"
+                      value={editFormData.name || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                      className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Цена (₽):</label>
+                    <input
+                      type="number"
+                      value={editFormData.price || 0}
+                      onChange={(e) => setEditFormData({ ...editFormData, price: parseInt(e.target.value) })}
+                      className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Длительность (мин):</label>
+                    <input
+                      type="number"
+                      value={editFormData.duration || 30}
+                      onChange={(e) => setEditFormData({ ...editFormData, duration: parseInt(e.target.value) })}
+                      className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Emoji:</label>
+                    <input
+                      type="text"
+                      value={editFormData.emoji || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, emoji: e.target.value })}
+                      className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-3 sticky bottom-0 pt-4 bg-[#1c2733] border-t border-[#242f3d]">
               <button
                 onClick={handleSaveEdit}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl transition-all"
               >
                 💾 Сохранить
               </button>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-3 rounded-xl transition-all"
+                className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-4 rounded-xl transition-all"
               >
                 Отмена
               </button>
