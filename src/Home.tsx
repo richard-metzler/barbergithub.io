@@ -38,11 +38,10 @@ export function Home() {
         console.log('Home.tsx: API response =', data);
         setRole(data.role || 'client');
 
-        // Для суперадмина показываем выбор роли
-        if (data.role === 'superadmin') {
-          console.log('Home.tsx: Setting showRoleSelect = true');
-          setShowRoleSelect(true);
-        }
+        // Для суперадмина НЕ показываем окно сразу - только по кнопке
+        // if (data.role === 'superadmin') {
+        //   setShowRoleSelect(true);
+        // }
 
         // Для мастеров - показываем кнопку панели
         if (data.role === 'master') {
