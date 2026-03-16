@@ -4,7 +4,7 @@ import { useTelegram } from './useTelegram';
 
 type UserRole = 'client' | 'master' | 'superadmin' | 'loading';
 
-export function ChatBot() {
+export function Home() {
   const navigate = useNavigate();
   const { init, getUserId, close, isTelegram, showMainButton, hideMainButton } = useTelegram();
   
