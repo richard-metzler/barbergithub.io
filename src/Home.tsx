@@ -207,11 +207,11 @@ export function Home() {
 
       {/* Modal выбора роли для суперадмина */}
       {showRoleSelect && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#1c2733] rounded-2xl p-6 max-w-sm w-full border border-[#242f3d]">
+        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-[#1c2733] rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-sm border-b sm:border border-[#242f3d] mb-safe">
             <h2 className="text-xl font-bold text-white mb-2 text-center">Выберите режим</h2>
             <p className="text-[#6c7883] text-sm mb-6 text-center">Как вы хотите войти?</p>
-            
+
             <div className="space-y-3">
               <button
                 onClick={() => {
@@ -226,7 +226,7 @@ export function Home() {
                   <div className="text-xs text-blue-200">Панель мастера</div>
                 </div>
               </button>
-              
+
               <button
                 onClick={() => {
                   setShowRoleSelect(false);
@@ -240,10 +240,10 @@ export function Home() {
                   <div className="text-xs text-blue-200">Полный доступ</div>
                 </div>
               </button>
-              
+
               <button
                 onClick={() => setShowRoleSelect(false)}
-                className="w-full bg-[#242f3d] hover:bg-[#2b3848] text-[#6c7883] font-semibold py-3 rounded-xl transition-all mt-4"
+                className="w-full bg-[#242f3d] hover:bg-[#2b3848] text-[#6c7883] font-semibold py-4 rounded-xl transition-all mt-4"
               >
                 Отмена
               </button>
