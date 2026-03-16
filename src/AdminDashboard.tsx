@@ -123,13 +123,24 @@ export function AdminDashboard() {
 
   // Блокировка времени в расписании
   const handleBlockTime = async () => {
-    if (!masterId || !scheduleDate || !scheduleTime) {
-      alert('Заполните все поля');
+    console.log('handleBlockTime called');
+    console.log('masterId:', masterId);
+    console.log('scheduleDate:', scheduleDate);
+    console.log('scheduleTime:', scheduleTime);
+    
+    if (!scheduleDate || !scheduleTime) {
+      alert('Выберите дату и время');
+      return;
+    }
+    
+    if (!masterId) {
+      alert('Ошибка: мастер не найден. Попробуйте обновить страницу.');
       return;
     }
 
     const userId = getUserId();
-    
+    console.log('Blocking time:', { master_id: masterId, date: scheduleDate, time: scheduleTime, userId });
+
     try {
       const response = await fetch(`${API_URL}/api/schedule`, {
         method: 'POST',
@@ -139,12 +150,12 @@ export function AdminDashboard() {
           date: scheduleDate,
           time: scheduleTime,
           reason: scheduleReason || 'Запись по телефону',
-          client_name: scheduleClient.name,
-          client_phone: scheduleClient.phone,
+          client_name: scheduleClient.name || 'Запись по телефону',
+          client_phone: scheduleClient.phone || '',
           created_by: userId,
         }),
       });
-      
+
       if (response.ok) {
         alert('Время заблокировано');
         setShowScheduleModal(false);
@@ -156,9 +167,11 @@ export function AdminDashboard() {
         loadData();
       } else {
         const error = await response.json();
+        console.error('Schedule error:', error);
         alert(error.error || 'Ошибка блокировки');
       }
     } catch (error) {
+      console.error('Schedule error:', error);
       alert('Ошибка блокировки');
     }
   };
