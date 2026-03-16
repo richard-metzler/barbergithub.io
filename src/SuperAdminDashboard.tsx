@@ -47,6 +47,7 @@ export function SuperAdminDashboard() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddMasterModal, setShowAddMasterModal] = useState(false);
   const [newMaster, setNewMaster] = useState({ name: '', avatar: '👨‍🎨', specialty: 'Барбер', rating: 5.0, telegram_chat_id: '' });
+  const [editFormData, setEditFormData] = useState<any>({});
 
   const API_URL = (import.meta as any).env?.VITE_API_URL || window.location.origin;
 
@@ -95,6 +96,46 @@ export function SuperAdminDashboard() {
     }
   };
 
+  // Открытие редактирования записи
+  const handleOpenEditBooking = (booking: Booking) => {
+    setEditingItem(booking);
+    setEditFormData({ ...booking });
+    setShowEditModal(true);
+  };
+
+  // Открытие редактирования мастера
+  const handleOpenEditMaster = (master: Master) => {
+    setEditingItem(master);
+    setEditFormData({ ...master, telegram_chat_id: master.telegram_chat_id?.toString() || '' });
+    setShowEditModal(true);
+  };
+
+  // Открытие редактирования услуги
+  const handleOpenEditService = (service: Service) => {
+    setEditingItem(service);
+    setEditFormData({ ...service });
+    setShowEditModal(true);
+  };
+
+  // Сохранение редактирования
+  const handleSaveEdit = () => {
+    if (activeTab === 'bookings') {
+      handleUpdateBooking(editFormData.id, editFormData);
+    } else if (activeTab === 'masters') {
+      handleUpdateMaster(editFormData.id, {
+        ...editFormData,
+        telegram_chat_id: editFormData.telegram_chat_id ? parseInt(editFormData.telegram_chat_id) : null,
+        rating: parseFloat(editFormData.rating) || 5.0,
+      });
+    } else if (activeTab === 'services') {
+      handleUpdateService(editFormData.id, {
+        ...editFormData,
+        price: parseInt(editFormData.price) || 0,
+        duration: parseInt(editFormData.duration) || 30,
+      });
+    }
+  };
+
   // Удаление записи
   const handleDeleteBooking = async (id: number) => {
     if (!confirm('Удалить запись?')) return;
@@ -128,6 +169,19 @@ export function SuperAdminDashboard() {
     } catch (error) {
       alert('Ошибка обновления');
     }
+  };
+
+  // Обновление услуги
+  const handleUpdateService = async (id: string, updates: any) => {
+    // Для услуг пока заглушка - в реальном проекте нужен API endpoint
+    alert('Редактирование услуг будет доступно в следующей версии');
+    setShowEditModal(false);
+  };
+
+  // Удаление услуги
+  const handleDeleteService = async (id: string) => {
+    if (!confirm('Удалить услугу?')) return;
+    alert('Удаление услуг будет доступно в следующей версии');
   };
 
   // Добавление мастера
@@ -290,7 +344,7 @@ export function SuperAdminDashboard() {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => { setEditingItem(booking); setShowEditModal(true); }}
+                      onClick={() => handleOpenEditBooking(booking)}
                       className="flex-1 bg-blue-600/20 text-blue-400 py-2 rounded-lg text-sm"
                     >
                       ✏️ Редактировать
@@ -339,7 +393,7 @@ export function SuperAdminDashboard() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => { setEditingItem(master); setShowEditModal(true); }}
+                    onClick={() => handleOpenEditMaster(master)}
                     className="bg-blue-600/20 text-blue-400 px-3 py-2 rounded-lg text-sm"
                   >
                     ✏️
@@ -366,12 +420,20 @@ export function SuperAdminDashboard() {
                   <div className="font-bold text-white">{service.name}</div>
                   <div className="text-sm text-[#8b9bb4]">{service.price} ₽ • {service.duration} мин</div>
                 </div>
-                <button
-                  onClick={() => { setEditingItem(service); setShowEditModal(true); }}
-                  className="bg-blue-600/20 text-blue-400 px-3 py-2 rounded-lg text-sm"
-                >
-                  ✏️
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleOpenEditService(service)}
+                    className="bg-blue-600/20 text-blue-400 px-3 py-2 rounded-lg text-sm"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => handleDeleteService(service.id)}
+                    className="bg-red-600/20 text-red-400 px-3 py-2 rounded-lg text-sm"
+                  >
+                    🗑️
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -381,16 +443,57 @@ export function SuperAdminDashboard() {
       {/* Edit Modal */}
       {showEditModal && editingItem && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#1c2733] rounded-xl p-6 max-w-md w-full">
-            <h3 className="text-lg font-bold text-white mb-4">Редактирование</h3>
-            
+          <div className="bg-[#1c2733] rounded-2xl p-6 max-w-md w-full border border-[#242f3d]">
+            <h3 className="text-xl font-bold text-white mb-6 text-center">
+              {activeTab === 'bookings' && '✏️ Редактирование записи'}
+              {activeTab === 'masters' && '✏️ Редактирование мастера'}
+              {activeTab === 'services' && '✏️ Редактирование услуги'}
+            </h3>
+
+            {/* Записи */}
             {activeTab === 'bookings' && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div>
-                  <label className="text-[#6c7883] text-sm">Статус</label>
+                  <label className="text-[#6c7883] text-sm mb-2 block">Клиент:</label>
+                  <input
+                    type="text"
+                    value={editFormData.client_name || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, client_name: e.target.value })}
+                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="text-[#6c7883] text-sm mb-2 block">Телефон:</label>
+                  <input
+                    type="text"
+                    value={editFormData.client_phone || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, client_phone: e.target.value })}
+                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="text-[#6c7883] text-sm mb-2 block">Дата:</label>
+                  <input
+                    type="date"
+                    value={editFormData.date || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, date: e.target.value })}
+                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="text-[#6c7883] text-sm mb-2 block">Время:</label>
+                  <input
+                    type="time"
+                    value={editFormData.time || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, time: e.target.value })}
+                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="text-[#6c7883] text-sm mb-2 block">Статус:</label>
                   <select
-                    value={editingItem.status}
-                    onChange={(e) => setEditingItem({ ...editingItem, status: e.target.value })}
+                    value={editFormData.status || 'pending'}
+                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
                     className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
                   >
                     <option value="pending">Ожидается</option>
@@ -402,19 +505,112 @@ export function SuperAdminDashboard() {
               </div>
             )}
 
+            {/* Мастера */}
+            {activeTab === 'masters' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[#6c7883] text-sm mb-2 block">Имя:</label>
+                  <input
+                    type="text"
+                    value={editFormData.name || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="text-[#6c7883] text-sm mb-2 block">Аватар:</label>
+                  <input
+                    type="text"
+                    value={editFormData.avatar || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, avatar: e.target.value })}
+                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="text-[#6c7883] text-sm mb-2 block">Специальность:</label>
+                  <input
+                    type="text"
+                    value={editFormData.specialty || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, specialty: e.target.value })}
+                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="text-[#6c7883] text-sm mb-2 block">Рейтинг:</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="5"
+                    value={editFormData.rating || 5}
+                    onChange={(e) => setEditFormData({ ...editFormData, rating: parseFloat(e.target.value) })}
+                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="text-[#6c7883] text-sm mb-2 block">Telegram ID:</label>
+                  <input
+                    type="text"
+                    value={editFormData.telegram_chat_id || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, telegram_chat_id: e.target.value })}
+                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Услуги */}
+            {activeTab === 'services' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[#6c7883] text-sm mb-2 block">Название:</label>
+                  <input
+                    type="text"
+                    value={editFormData.name || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="text-[#6c7883] text-sm mb-2 block">Цена (₽):</label>
+                  <input
+                    type="number"
+                    value={editFormData.price || 0}
+                    onChange={(e) => setEditFormData({ ...editFormData, price: parseInt(e.target.value) })}
+                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="text-[#6c7883] text-sm mb-2 block">Длительность (мин):</label>
+                  <input
+                    type="number"
+                    value={editFormData.duration || 30}
+                    onChange={(e) => setEditFormData({ ...editFormData, duration: parseInt(e.target.value) })}
+                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="text-[#6c7883] text-sm mb-2 block">Emoji:</label>
+                  <input
+                    type="text"
+                    value={editFormData.emoji || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, emoji: e.target.value })}
+                    className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg"
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => {
-                  if (activeTab === 'bookings') handleUpdateBooking(editingItem.id, editingItem);
-                  setShowEditModal(false);
-                }}
-                className="flex-1 bg-blue-600 text-white py-2 rounded-lg"
+                onClick={handleSaveEdit}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all"
               >
-                Сохранить
+                💾 Сохранить
               </button>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="flex-1 bg-[#242f3d] text-white py-2 rounded-lg"
+                className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-3 rounded-xl transition-all"
               >
                 Отмена
               </button>
