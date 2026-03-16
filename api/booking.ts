@@ -109,6 +109,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
+    // Отправка уведомления мастеру
+    if (botToken && booking.masterId) {
+      try {
+        const notifyUrl = `${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : ''}/api/notify-master`;
+        
+        await fetch(notifyUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            booking,
+            masterId: booking.masterId,
+          }),
+        });
+      } catch (masterError) {
+        console.error('Master notification error:', masterError);
+      }
+    }
+
     return res.status(200).json({ success: true, booking: data });
 
   } catch (error) {
