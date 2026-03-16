@@ -40,7 +40,7 @@ export function ChatBot() {
 
   // Загрузка мастеров из API
   useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
+    const API_URL = (import.meta as any).env?.VITE_API_URL || window.location.origin;
     fetch(`${API_URL}/api/masters`)
       .then(r => r.json())
       .then(data => {
@@ -48,7 +48,10 @@ export function ChatBot() {
           setMasters(data.masters);
         }
       })
-      .catch(() => console.log('Using default masters'));
+      .catch(() => {
+        console.log('Using default masters');
+        setMasters(defaultMasters);
+      });
   }, []);
 
   // Инициализация Telegram WebApp
