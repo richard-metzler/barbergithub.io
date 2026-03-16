@@ -1,8 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 
 export default async function handler(req, res) {
-  console.log('BOT_TOKEN exists:', !!process.env.BOT_TOKEN);
-  
   if (!process.env.BOT_TOKEN) {
     return res.status(500).json({ error: 'BOT_TOKEN missing' });
   }
@@ -11,28 +9,25 @@ export default async function handler(req, res) {
     const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: false });
     const body = req.body;
     
-    if (body?.message) {
+    if (body?.message?.text === '/start') {
       const chatId = body.message.chat.id;
-      const text = body.message.text || '';
-      
-      if (text === '/start') {
-        await bot.sendMessage(chatId, 
-          '🎉 *Telegram Booking Bot готов!*\n\n' +
-          'Нажмите кнопку для открытия веб-приложения:', 
-          {
-            parse_mode: 'Markdown',
-            reply_markup: {
-              inline_keyboard: [[
-                { text: '🚀 Открыть бронирование', web_app: { url: 'https://barbergithub.io' } }
-              ]]
-            }
-          });
-      }
+      await bot.sendMessage(chatId, 
+        '🎉 *Telegram Booking Bot готов!*', {
+          reply_markup: {
+            inline_keyboard: [[
+              { 
+                text: '🚀 Открыть бронирование', 
+                web_app: { 
+                  url: 'https://project-lmebt.vercel.app' 
+                } 
+              }
+            ]]
+          }
+        });
     }
     
-    res.status(200).json({ status: 'OK' });
+    res.status(200).json({ ok: true });
   } catch (error) {
-    console.error('Error:', error.message);
     res.status(500).json({ error: error.message });
   }
 }
