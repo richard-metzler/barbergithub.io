@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { masters } from './data';
+import { defaultMasters } from './data';
 
 interface Appointment {
   id: string;
@@ -20,7 +20,7 @@ const mockAppointments: Appointment[] = [
 
 export function AdminDashboard() {
   const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
-  const [selectedMasterId, setSelectedMasterId] = useState<string>(masters[0].id);
+  const [selectedMasterId, setSelectedMasterId] = useState<string>(defaultMasters[0].id);
 
   const handleStatusChange = (id: string, newStatus: Appointment['status']) => {
     setAppointments(appointments.map(app => 
