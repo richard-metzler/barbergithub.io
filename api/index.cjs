@@ -1,12 +1,17 @@
-process.env.NTBA_FIX_319 = 1;
 const TelegramBot = require('node-telegram-bot-api');
 
 module.exports = async (req, res) => {
+  console.log('BOT_TOKEN exists:', !!process.env.BOT_TOKEN);
+  
+  if (!process.env.BOT_TOKEN) {
+    return res.status(500).json({ error: 'BOT_TOKEN missing' });
+  }
+  
   try {
     const bot = new TelegramBot(process.env.BOT_TOKEN);
     const body = req.body;
     
-    if (body.message) {
+    if (body?.message) {
       const chatId = body.message.chat.id;
       const text = body.message.text || '';
       
@@ -25,9 +30,9 @@ module.exports = async (req, res) => {
       }
     }
     
-    res.status(200).send('OK');
+    res.status(200).json({ status: 'OK' });
   } catch (error) {
-    console.error(error);
-    res.status(500).send('Error');
+    console.error('Error:', error.message);
+    res.status(500).json({ error: error.message });
   }
 };
