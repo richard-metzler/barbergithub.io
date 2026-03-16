@@ -110,11 +110,6 @@ export function ChatBot() {
         addBotMessage('Помогу вам записаться на стрижку быстро и удобно. Выберите услугу:', 'services');
         setStep('services');
       }, 1200);
-      
-      // Добавляем кнопку для мастера через 2 секунды
-      setTimeout(() => {
-        addBotMessage('👨‍💼 Вы мастер? Откройте панель управления:', 'admin_button');
-      }, 2000);
     }
   }, []);
 
