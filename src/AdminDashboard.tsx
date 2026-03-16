@@ -165,8 +165,15 @@ export function AdminDashboard() {
 
   // Блокировка времени в расписании
   const handleBlockTime = async () => {
+    console.log('handleBlockTime called');
+    console.log('masterId:', masterId);
+    console.log('scheduleDate:', scheduleDate);
+    console.log('scheduleTimes:', scheduleTimes);
+    
     if (!masterId || !scheduleDate || scheduleTimes.length === 0) {
-      alert('Выберите дату и хотя бы одно время');
+      const errorMsg = `Ошибка проверки:\nmasterId: ${masterId || 'пустой'}\nscheduleDate: ${scheduleDate || 'пустой'}\nscheduleTimes: ${scheduleTimes.length} элементов`;
+      console.error(errorMsg);
+      alert(errorMsg);
       return;
     }
 
