@@ -18,7 +18,7 @@ export default async function handler(req, res) {
               { 
                 text: '🚀 Открыть бронирование', 
                 web_app: { 
-                  url: 'https://project-lmebt.vercel.app' 
+                  url: 'https://richard-metzler.github.io/barbergithub.io' 
                 } 
               }
             ]]
