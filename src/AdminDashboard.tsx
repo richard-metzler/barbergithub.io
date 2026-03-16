@@ -411,17 +411,13 @@ export function AdminDashboard() {
 
                 <div className="grid grid-cols-4 gap-2 mb-4">
                   {getNextDays(14).map(date => {
-                    const isWeekend = date.getDay() === 0;
                     const isSelected = scheduleDate === date.toISOString().slice(0, 10);
                     return (
                       <button
                         key={date.toISOString()}
-                        onClick={() => !isWeekend && handleScheduleDateSelect(date)}
-                        disabled={isWeekend}
+                        onClick={() => handleScheduleDateSelect(date)}
                         className={`flex flex-col items-center p-3 rounded-xl transition-all active:scale-95 ${
-                          isWeekend
-                            ? 'bg-[#242f3d] text-[#4a5a6a] cursor-not-allowed'
-                            : isSelected
+                          isSelected
                             ? 'bg-orange-600 text-white ring-2 ring-orange-400'
                             : 'bg-[#2b5278] hover:bg-[#326292] text-white'
                         }`}
