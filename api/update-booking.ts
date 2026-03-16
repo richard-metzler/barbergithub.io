@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createServerClient } from '../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 function cors(res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -19,6 +19,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+
     const { id, status } = req.body;
 
     if (!id || !status) {
@@ -30,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
-    const supabase = createServerClient();
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { data, error } = await supabase
       .from('bookings')
@@ -48,7 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error) {
     console.error('Handler error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : String(error)
     });

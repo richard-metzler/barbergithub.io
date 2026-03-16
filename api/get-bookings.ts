@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createServerClient } from '../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 function cors(res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -19,12 +19,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+
     const { date, master_id, status } = req.query;
-    const supabase = createServerClient();
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     let query = supabase.from('bookings').select('*');
 
-    // Фильтры
     if (date) {
       query = query.eq('date', date as string);
     }
@@ -35,7 +41,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       query = query.eq('status', status as string);
     }
 
-    // Сортировка по времени
     query = query.order('time', { ascending: true });
 
     const { data, error } = await query;
@@ -49,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error) {
     console.error('Handler error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : String(error)
     });

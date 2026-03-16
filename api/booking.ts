@@ -1,7 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createServerClient, type Booking } from '../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
-// Разрешаем CORS для запросов с фронтенда
+export interface Booking {
+  id?: number;
+  created_at?: string;
+  service: string;
+  service_price: number;
+  master: string;
+  master_id: string;
+  date: string;
+  time: string;
+  client_name: string;
+  client_phone: string;
+  client_user_id?: number;
+  want_notification: boolean;
+  status: string;
+  reminder_sent: boolean;
+  telegram_chat_id?: number;
+}
+
 function cors(res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -11,28 +28,36 @@ function cors(res: VercelResponse) {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   cors(res);
 
-  // Обработка preflight запроса
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  // Только POST запросы
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { action, userId, booking } = req.body;
+    // Проверка переменных окружения
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+    const botToken = process.env.BOT_TOKEN;
 
-    // Проверка обязательных данных
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase env vars');
+      return res.status(500).json({ 
+        error: 'Server configuration error',
+        details: 'Missing SUPABASE_URL or SUPABASE_SERVICE_KEY'
+      });
+    }
+
+    const { userId, booking } = req.body;
+
     if (!booking) {
       return res.status(400).json({ error: 'Booking data required' });
     }
 
-    // Создаём серверный клиент Supabase
-    const supabase = createServerClient();
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Формируем объект для вставки
     const bookingData: Partial<Booking> = {
       service: booking.service,
       service_price: booking.servicePrice,
@@ -48,7 +73,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       reminder_sent: false,
     };
 
-    // Сохраняем в базу
     const { data, error } = await supabase
       .from('bookings')
       .insert(bookingData)
@@ -60,11 +84,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to save booking', details: error.message });
     }
 
-    // Отправляем подтверждение в Telegram (если есть chat_id)
-    if (process.env.BOT_TOKEN && booking.client_user_id) {
+    // Отправка подтверждения в Telegram
+    if (botToken && userId) {
       try {
-        const telegramUrl = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`;
-        
+        const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
         const message = `✅ *Запись подтверждена!*\n\n` +
           `📅 ${formatDate(booking.date)} в ${booking.time}\n` +
           `✂️ ${booking.service}\n` +
@@ -76,26 +99,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            chat_id: booking.client_user_id,
+            chat_id: userId,
             text: message,
             parse_mode: 'Markdown',
           }),
         });
       } catch (tgError) {
-        console.error('Telegram notification error:', tgError);
-        // Не прерываем запрос, если уведомление не отправилось
+        console.error('Telegram error:', tgError);
       }
     }
 
-    return res.status(200).json({ 
-      success: true, 
-      booking: data,
-      message: 'Booking saved successfully' 
-    });
+    return res.status(200).json({ success: true, booking: data });
 
   } catch (error) {
     console.error('Handler error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : String(error)
     });
