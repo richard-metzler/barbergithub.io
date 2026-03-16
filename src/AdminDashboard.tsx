@@ -90,27 +90,58 @@ export function AdminDashboard() {
   // Получаем данные мастера
   useEffect(() => {
     const userId = getUserId();
+    console.log('AdminDashboard: userId =', userId);
     if (!userId) return;
 
+    // Получаем роль пользователя
     fetch(`${API_URL}/api/get-user-role?userId=${userId}`)
       .then(r => r.json())
-      .then(data => {
-        if (data.masterId) {
-          setMasterId(data.masterId);
-          // Загружаем записи этого мастера
-          fetch(`${API_URL}/api/get-bookings?master_id=${data.masterId}`)
-            .then(r => r.json())
-            .then(data => {
-              setAppointments(data.bookings || []);
-              setLoading(false);
-            })
-            .catch(() => setLoading(false));
+      .then(roleData => {
+        console.log('AdminDashboard: roleData =', roleData);
+        
+        // Если мастер - используем его masterId
+        if (roleData.masterId) {
+          setMasterId(roleData.masterId);
+          loadBookings(roleData.masterId);
         } else {
-          setLoading(false);
+          // Если суперадмин или клиент - пробуем найти мастера по telegram_chat_id
+          fetch(`${API_URL}/api/masters`)
+            .then(r => r.json())
+            .then(mastersData => {
+              const master = (mastersData.masters || []).find(
+                (m: any) => m.telegram_chat_id === userId
+              );
+              if (master) {
+                console.log('AdminDashboard: Found master by telegram_chat_id:', master);
+                setMasterId(master.id);
+                loadBookings(master.id);
+              } else {
+                console.log('AdminDashboard: No master found for userId:', userId);
+                setLoading(false);
+              }
+            })
+            .catch(err => {
+              console.error('AdminDashboard: Error fetching masters:', err);
+              setLoading(false);
+            });
         }
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        console.error('AdminDashboard: Error fetching role:', err);
+        setLoading(false);
+      });
   }, []);
+
+  // Функция загрузки записей
+  const loadBookings = (masterId: string) => {
+    fetch(`${API_URL}/api/get-bookings?master_id=${masterId}`)
+      .then(r => r.json())
+      .then(data => {
+        setAppointments(data.bookings || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  };
 
   const handleStatusChange = (id: number, newStatus: Appointment['status']) => {
     fetch(`${API_URL}/api/update-booking`, {
