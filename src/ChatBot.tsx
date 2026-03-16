@@ -144,31 +144,57 @@ export function ChatBot() {
     }, 300);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     addUserMessage('✅ Подтверждаю!');
-    
+
     // Вибрация при подтверждении (в Telegram)
     hapticFeedback('success');
-    
+
+    // Формируем данные для отправки
+    const bookingData = {
+      action: 'booking_confirmed',
+      userId: getUserId(),
+      booking: {
+        service: selectedService?.name,
+        servicePrice: selectedService?.price,
+        master: selectedMaster?.name,
+        masterId: selectedMaster?.id,
+        date: selectedDate?.toISOString().slice(0, 10),
+        time: selectedTime,
+        clientName: clientName.trim(),
+        clientPhone: clientPhone.trim(),
+        wantNotification,
+      }
+    };
+
     // Отправляем данные боту (если запущено в Telegram)
     if (isTelegram) {
-      sendData({
-        action: 'booking_confirmed',
-        userId: getUserId(),
-        booking: {
-          service: selectedService?.name,
-          servicePrice: selectedService?.price,
-          master: selectedMaster?.name,
-          masterId: selectedMaster?.id,
-          date: selectedDate?.toISOString().slice(0, 10),
-          time: selectedTime,
-          clientName: clientName.trim(),
-          clientPhone: clientPhone.trim(),
-          wantNotification,
-        }
-      });
+      sendData(bookingData);
     }
-    
+
+    // Отправляем на бэкенд для сохранения в базу
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || '/api/booking';
+      
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookingData),
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        console.error('API error:', result);
+        // Не прерываем, показываем успех всё равно
+      } else {
+        console.log('✅ Booking saved:', result.booking?.id);
+      }
+    } catch (error) {
+      console.error('Failed to save booking:', error);
+      // Не прерываем пользователя, просто логируем ошибку
+    }
+
     setTimeout(() => {
       let doneMsg = '🎉 Запись подтверждена!\n\nЖдем вас в нашем барбершопе.';
       if (wantNotification) {

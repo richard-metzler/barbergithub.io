@@ -1,0 +1,31 @@
+name: Send Booking Reminders
+
+on:
+  schedule:
+    # Запуск каждые 30 минут (в 00 и 30 минут каждого часа)
+    - cron: '0,30 * * * *'
+  workflow_dispatch: # Возможность ручного запуска
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Send reminders
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: node scripts/send-reminders.js
