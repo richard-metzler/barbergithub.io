@@ -623,79 +623,81 @@ export function SuperAdminDashboard() {
 
       {/* Add Master Modal */}
       {showAddMasterModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#1c2733] rounded-2xl p-6 max-w-sm w-full border border-[#242f3d]">
-            <h2 className="text-xl font-bold text-white mb-4 text-center">➕ Добавить мастера</h2>
-            
-            <div className="mb-4">
-              <label className="text-[#6c7883] text-sm mb-2 block">Имя:</label>
-              <input
-                type="text"
-                value={newMaster.name}
-                onChange={(e) => setNewMaster({ ...newMaster, name: e.target.value })}
-                placeholder="Алексей"
-                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+          <div className="bg-[#1c2733] rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-sm border-b sm:border border-[#242f3d] mb-safe max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold text-white mb-4 text-center sticky top-0 bg-[#1c2733] pb-4">➕ Добавить мастера</h2>
+
+            <div className="space-y-4 mb-4">
+              <div>
+                <label className="text-[#6c7883] text-sm mb-2 block">Имя:</label>
+                <input
+                  type="text"
+                  value={newMaster.name}
+                  onChange={(e) => setNewMaster({ ...newMaster, name: e.target.value })}
+                  placeholder="Алексей"
+                  className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[#6c7883] text-sm mb-2 block">Аватар:</label>
+                <input
+                  type="text"
+                  value={newMaster.avatar}
+                  onChange={(e) => setNewMaster({ ...newMaster, avatar: e.target.value })}
+                  placeholder="👨‍🎨"
+                  className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[#6c7883] text-sm mb-2 block">Специальность:</label>
+                <input
+                  type="text"
+                  value={newMaster.specialty}
+                  onChange={(e) => setNewMaster({ ...newMaster, specialty: e.target.value })}
+                  placeholder="Топ-барбер"
+                  className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[#6c7883] text-sm mb-2 block">Рейтинг:</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="5"
+                  value={newMaster.rating}
+                  onChange={(e) => setNewMaster({ ...newMaster, rating: parseFloat(e.target.value) })}
+                  placeholder="5.0"
+                  className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[#6c7883] text-sm mb-2 block">Telegram ID:</label>
+                <input
+                  type="text"
+                  value={newMaster.telegram_chat_id}
+                  onChange={(e) => setNewMaster({ ...newMaster, telegram_chat_id: e.target.value })}
+                  placeholder="1362609452"
+                  className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-[#6c7883] mt-1">Оставьте пустым если не нужно</p>
+              </div>
             </div>
-            
-            <div className="mb-4">
-              <label className="text-[#6c7883] text-sm mb-2 block">Аватар:</label>
-              <input
-                type="text"
-                value={newMaster.avatar}
-                onChange={(e) => setNewMaster({ ...newMaster, avatar: e.target.value })}
-                placeholder="👨‍🎨"
-                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            
-            <div className="mb-4">
-              <label className="text-[#6c7883] text-sm mb-2 block">Специальность:</label>
-              <input
-                type="text"
-                value={newMaster.specialty}
-                onChange={(e) => setNewMaster({ ...newMaster, specialty: e.target.value })}
-                placeholder="Топ-барбер"
-                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            
-            <div className="mb-4">
-              <label className="text-[#6c7883] text-sm mb-2 block">Рейтинг:</label>
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                max="5"
-                value={newMaster.rating}
-                onChange={(e) => setNewMaster({ ...newMaster, rating: parseFloat(e.target.value) })}
-                placeholder="5.0"
-                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            
-            <div className="mb-6">
-              <label className="text-[#6c7883] text-sm mb-2 block">Telegram ID:</label>
-              <input
-                type="text"
-                value={newMaster.telegram_chat_id}
-                onChange={(e) => setNewMaster({ ...newMaster, telegram_chat_id: e.target.value })}
-                placeholder="1362609452"
-                className="w-full bg-[#242f3d] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="text-xs text-[#6c7883] mt-1">Оставьте пустым если не нужно</p>
-            </div>
-            
-            <div className="flex gap-3">
+
+            <div className="flex gap-3 sticky bottom-0 pt-4 bg-[#1c2733] border-t border-[#242f3d]">
               <button
                 onClick={handleAddMaster}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition-all"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-4 rounded-xl transition-all"
               >
                 ➕ Добавить
               </button>
               <button
                 onClick={() => setShowAddMasterModal(false)}
-                className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-3 rounded-xl transition-all"
+                className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-4 rounded-xl transition-all"
               >
                 Отмена
               </button>
