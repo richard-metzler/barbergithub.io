@@ -36,25 +36,40 @@ export function ChatBot() {
   const [wantNotification, setWantNotification] = useState<boolean>(true);
   const [isTyping, setIsTyping] = useState(false);
   const [masters, setMasters] = useState<Master[]>(defaultMasters);
+  const [isMaster, setIsMaster] = useState(false);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Загрузка мастеров из API
+  // Проверка, является ли пользователь мастером
   useEffect(() => {
-    const API_URL = (import.meta as any).env?.VITE_API_URL || window.location.origin;
-    fetch(`${API_URL}/api/masters`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.masters && data.masters.length > 0) {
-          setMasters(data.masters);
-        }
-      })
-      .catch(() => {
-        console.log('Using default masters');
-        setMasters(defaultMasters);
-      });
-  }, []);
+    const userId = getUserId();
+    if (userId) {
+      const API_URL = (import.meta as any).env?.VITE_API_URL || window.location.origin;
+      fetch(`${API_URL}/api/masters`)
+        .then(r => r.json())
+        .then(data => {
+          const isUserMaster = data.masters?.some((m: Master) => m.telegram_chat_id === userId);
+          setIsMaster(!!isUserMaster);
+          
+          // Если мастер - показываем кнопку админ-панели
+          if (isUserMaster) {
+            setTimeout(() => {
+              addBotMessage('👨‍💼 Вы мастер? Откройте панель управления:', 'admin_button');
+            }, 2000);
+          }
+          
+          // Загружаем мастеров
+          if (data.masters && data.masters.length > 0) {
+            setMasters(data.masters);
+          }
+        })
+        .catch(() => {
+          console.log('Using default masters');
+          setMasters(defaultMasters);
+        });
+    }
+  }, [getUserId]);
 
   // Инициализация Telegram WebApp
   useEffect(() => {
