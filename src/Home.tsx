@@ -69,13 +69,6 @@ export function Home() {
     }
   };
 
-  // Показываем окно выбора роли сразу для суперадмина
-  useEffect(() => {
-    if (role === 'superadmin' && !showRoleSelect) {
-      setShowRoleSelect(true);
-    }
-  }, [role]);
-
   // Загрузка последней записи
   useEffect(() => {
     const userId = getUserId();
