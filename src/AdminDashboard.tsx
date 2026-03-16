@@ -77,11 +77,14 @@ export function AdminDashboard() {
 
   // Обработка выбора времени для блокировки
   const handleScheduleTimeToggle = (time: string) => {
-    setScheduleTimes(prev =>
-      prev.includes(time)
+    console.log('Time toggle:', time);
+    setScheduleTimes(prev => {
+      const newTimes = prev.includes(time)
         ? prev.filter(t => t !== time)
-        : [...prev, time]
-    );
+        : [...prev, time];
+      console.log('New scheduleTimes:', newTimes);
+      return newTimes;
+    });
   };
 
   // Получаем данные мастера
