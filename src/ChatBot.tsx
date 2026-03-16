@@ -44,21 +44,19 @@ export function ChatBot() {
   // Проверка, является ли пользователь мастером
   useEffect(() => {
     const userId = getUserId();
-    if (userId) {
+    if (userId && !isMaster) {
       const API_URL = (import.meta as any).env?.VITE_API_URL || window.location.origin;
       fetch(`${API_URL}/api/masters`)
         .then(r => r.json())
         .then(data => {
           const isUserMaster = data.masters?.some((m: Master) => m.telegram_chat_id === userId);
-          setIsMaster(!!isUserMaster);
-          
-          // Если мастер - показываем кнопку админ-панели
           if (isUserMaster) {
+            setIsMaster(true);
             setTimeout(() => {
               addBotMessage('👨‍💼 Вы мастер? Откройте панель управления:', 'admin_button');
             }, 2000);
           }
-          
+
           // Загружаем мастеров
           if (data.masters && data.masters.length > 0) {
             setMasters(data.masters);
