@@ -171,8 +171,9 @@ export function AdminDashboard() {
 
     try {
       // Блокируем каждое выбранное время
+      const results = [];
       for (const time of scheduleTimes) {
-        await fetch(`${API_URL}/api/schedule`, {
+        const response = await fetch(`${API_URL}/api/schedule`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -185,9 +186,18 @@ export function AdminDashboard() {
             created_by: userId,
           }),
         });
+
+        const result = await response.json();
+        
+        if (!response.ok) {
+          console.error('Schedule API error:', result);
+          throw new Error(result.error || 'Ошибка при блокировке');
+        }
+        
+        results.push(result);
       }
 
-      alert(`Заблокировано время: ${scheduleTimes.join(', ')}`);
+      alert(`✅ Заблокировано время: ${scheduleTimes.join(', ')}`);
       setShowScheduleModal(false);
       setScheduleStep('date');
       setScheduleDate('');
@@ -195,9 +205,9 @@ export function AdminDashboard() {
       setScheduleReason('');
       setScheduleClient({ name: '', phone: '' });
       loadData();
-    } catch (error) {
-      console.error('Schedule error:', error);
-      alert('Ошибка блокировки');
+    } catch (error: any) {
+      console.error('Block time error:', error);
+      alert('❌ Ошибка блокировки: ' + error.message);
     }
   };
 
