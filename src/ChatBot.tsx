@@ -42,6 +42,27 @@ export function ChatBot() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  }, []);
+
+  const addBotMessage = useCallback((text: string, widget?: Step) => {
+    setIsTyping(true);
+    scrollToBottom();
+    setTimeout(() => {
+      setIsTyping(false);
+      setMessages(prev => [...prev, createMsg(text, 'bot', widget)]);
+      scrollToBottom();
+    }, 600 + Math.random() * 400);
+  }, [scrollToBottom]);
+
+  const addUserMessage = useCallback((text: string) => {
+    setMessages(prev => [...prev, createMsg(text, 'user')]);
+    scrollToBottom();
+  }, [scrollToBottom]);
+
   // Проверка, является ли пользователь мастером
   useEffect(() => {
     const userId = getUserId();
@@ -69,7 +90,7 @@ export function ChatBot() {
           setMasters(defaultMasters);
         });
     }
-  }, [getUserId]);
+  }, [getUserId, addBotMessage]);
 
   // Инициализация Telegram WebApp
   useEffect(() => {
@@ -80,27 +101,6 @@ export function ChatBot() {
       setClientName(tgName);
     }
   }, []);
-
-  const scrollToBottom = useCallback(() => {
-    setTimeout(() => {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  }, []);
-
-  const addBotMessage = useCallback((text: string, widget?: Step) => {
-    setIsTyping(true);
-    scrollToBottom();
-    setTimeout(() => {
-      setIsTyping(false);
-      setMessages(prev => [...prev, createMsg(text, 'bot', widget)]);
-      scrollToBottom();
-    }, 600 + Math.random() * 400);
-  }, [scrollToBottom]);
-
-  const addUserMessage = useCallback((text: string) => {
-    setMessages(prev => [...prev, createMsg(text, 'user')]);
-    scrollToBottom();
-  }, [scrollToBottom]);
 
   // Welcome
   useEffect(() => {
