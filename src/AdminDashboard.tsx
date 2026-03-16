@@ -38,12 +38,51 @@ export function AdminDashboard() {
   
   // Расписание (блокировка времени)
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleStep, setScheduleStep] = useState<'date' | 'time' | 'details'>('date');
   const [scheduleDate, setScheduleDate] = useState('');
-  const [scheduleTime, setScheduleTime] = useState('');
+  const [scheduleTimes, setScheduleTimes] = useState<string[]>([]);
   const [scheduleReason, setScheduleReason] = useState('');
   const [scheduleClient, setScheduleClient] = useState({ name: '', phone: '' });
 
   const API_URL = (import.meta as any).env?.VITE_API_URL || window.location.origin;
+
+  // Получение следующих 14 дней
+  const getNextDays = (count: number) => {
+    const days = [];
+    const today = new Date();
+    for (let i = 0; i < count; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      days.push(d);
+    }
+    return days;
+  };
+
+  const formatDate = (date: Date) => {
+    const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+    const months = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+    return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
+  };
+
+  const formatDateFull = (date: Date) => {
+    const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+  };
+
+  // Обработка выбора даты для блокировки
+  const handleScheduleDateSelect = (date: Date) => {
+    setScheduleDate(date.toISOString().slice(0, 10));
+    setScheduleStep('time');
+  };
+
+  // Обработка выбора времени для блокировки
+  const handleScheduleTimeToggle = (time: string) => {
+    setScheduleTimes(prev =>
+      prev.includes(time)
+        ? prev.filter(t => t !== time)
+        : [...prev, time]
+    );
+  };
 
   // Получаем данные мастера
   useEffect(() => {
@@ -123,53 +162,39 @@ export function AdminDashboard() {
 
   // Блокировка времени в расписании
   const handleBlockTime = async () => {
-    console.log('handleBlockTime called');
-    console.log('masterId:', masterId);
-    console.log('scheduleDate:', scheduleDate);
-    console.log('scheduleTime:', scheduleTime);
-    
-    if (!scheduleDate || !scheduleTime) {
-      alert('Выберите дату и время');
-      return;
-    }
-    
-    if (!masterId) {
-      alert('Ошибка: мастер не найден. Попробуйте обновить страницу.');
+    if (!masterId || !scheduleDate || scheduleTimes.length === 0) {
+      alert('Выберите дату и хотя бы одно время');
       return;
     }
 
     const userId = getUserId();
-    console.log('Blocking time:', { master_id: masterId, date: scheduleDate, time: scheduleTime, userId });
 
     try {
-      const response = await fetch(`${API_URL}/api/schedule`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          master_id: masterId,
-          date: scheduleDate,
-          time: scheduleTime,
-          reason: scheduleReason || 'Запись по телефону',
-          client_name: scheduleClient.name || 'Запись по телефону',
-          client_phone: scheduleClient.phone || '',
-          created_by: userId,
-        }),
-      });
-
-      if (response.ok) {
-        alert('Время заблокировано');
-        setShowScheduleModal(false);
-        setScheduleDate('');
-        setScheduleTime('');
-        setScheduleReason('');
-        setScheduleClient({ name: '', phone: '' });
-        // Перезагрузить записи
-        loadData();
-      } else {
-        const error = await response.json();
-        console.error('Schedule error:', error);
-        alert(error.error || 'Ошибка блокировки');
+      // Блокируем каждое выбранное время
+      for (const time of scheduleTimes) {
+        await fetch(`${API_URL}/api/schedule`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            master_id: masterId,
+            date: scheduleDate,
+            time,
+            reason: scheduleReason || 'Запись по телефону',
+            client_name: scheduleClient.name || 'Запись по телефону',
+            client_phone: scheduleClient.phone || '',
+            created_by: userId,
+          }),
+        });
       }
+
+      alert(`Заблокировано время: ${scheduleTimes.join(', ')}`);
+      setShowScheduleModal(false);
+      setScheduleStep('date');
+      setScheduleDate('');
+      setScheduleTimes([]);
+      setScheduleReason('');
+      setScheduleClient({ name: '', phone: '' });
+      loadData();
     } catch (error) {
       console.error('Schedule error:', error);
       alert('Ошибка блокировки');
@@ -376,84 +401,170 @@ export function AdminDashboard() {
 
       {/* Schedule Block Modal */}
       {showScheduleModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto">
-          <div className="bg-[#1c2733] rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-sm border-b sm:border border-[#242f3d] mb-safe">
-            <h2 className="text-xl font-bold text-white mb-4 text-center">🚫 Заблокировать время</h2>
-            <p className="text-[#6c7883] text-sm mb-4 text-center">Запись по телефону или другое событие</p>
-            
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto mb-4" style={{ scrollbarWidth: 'thin', scrollbarColor: '#242f3d transparent' }}>
-              <div>
-                <label className="text-[#6c7883] text-sm mb-2 block">Дата:</label>
-                <input
-                  type="date"
-                  value={scheduleDate}
-                  onChange={(e) => setScheduleDate(e.target.value)}
-                  className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
-              
-              <div>
-                <label className="text-[#6c7883] text-sm mb-2 block">Время:</label>
-                <select
-                  value={scheduleTime}
-                  onChange={(e) => setScheduleTime(e.target.value)}
-                  className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
-                  <option value="">Выберите время</option>
-                  {timeSlots.map(time => (
-                    <option key={time} value={time}>{time}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="text-[#6c7883] text-sm mb-2 block">Причина:</label>
-                <input
-                  type="text"
-                  value={scheduleReason}
-                  onChange={(e) => setScheduleReason(e.target.value)}
-                  placeholder="Запись по телефону"
-                  className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
-              
-              <div>
-                <label className="text-[#6c7883] text-sm mb-2 block">Имя клиента:</label>
-                <input
-                  type="text"
-                  value={scheduleClient.name}
-                  onChange={(e) => setScheduleClient({ ...scheduleClient, name: e.target.value })}
-                  placeholder="Иван"
-                  className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
-              
-              <div>
-                <label className="text-[#6c7883] text-sm mb-2 block">Телефон:</label>
-                <input
-                  type="tel"
-                  value={scheduleClient.phone}
-                  onChange={(e) => setScheduleClient({ ...scheduleClient, phone: e.target.value })}
-                  placeholder="+7 (999) 000-00-00"
-                  className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
-            </div>
-            
-            <div className="flex gap-3 sticky bottom-0 pt-4 bg-[#1c2733] border-t border-[#242f3d]">
-              <button
-                onClick={handleBlockTime}
-                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-4 rounded-xl transition-all"
-              >
-                🚫 Заблокировать
-              </button>
-              <button
-                onClick={() => setShowScheduleModal(false)}
-                className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-4 rounded-xl transition-all"
-              >
-                Отмена
-              </button>
-            </div>
+        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+          <div className="bg-[#1c2733] rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md border-b sm:border border-[#242f3d] mb-safe max-h-[90vh] overflow-y-auto">
+            {/* Шаг 1: Выбор даты */}
+            {scheduleStep === 'date' && (
+              <>
+                <h2 className="text-xl font-bold text-white mb-2 text-center">📅 Выберите дату</h2>
+                <p className="text-[#6c7883] text-sm mb-6 text-center">Для блокировки времени</p>
+
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                  {getNextDays(14).map(date => {
+                    const isWeekend = date.getDay() === 0;
+                    const isSelected = scheduleDate === date.toISOString().slice(0, 10);
+                    return (
+                      <button
+                        key={date.toISOString()}
+                        onClick={() => !isWeekend && handleScheduleDateSelect(date)}
+                        disabled={isWeekend}
+                        className={`flex flex-col items-center p-3 rounded-xl transition-all active:scale-95 ${
+                          isWeekend
+                            ? 'bg-[#242f3d] text-[#4a5a6a] cursor-not-allowed'
+                            : isSelected
+                            ? 'bg-orange-600 text-white ring-2 ring-orange-400'
+                            : 'bg-[#2b5278] hover:bg-[#326292] text-white'
+                        }`}
+                      >
+                        <span className="text-xs uppercase">{['Вс','Пн','Вт','Ср','Чт','Пт','Сб'][date.getDay()]}</span>
+                        <span className="font-bold text-lg">{date.getDate()}</span>
+                        <span className="text-xs">{['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'][date.getMonth()]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex gap-3 sticky bottom-0 pt-4 bg-[#1c2733] border-t border-[#242f3d]">
+                  <button
+                    onClick={() => setShowScheduleModal(false)}
+                    className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-4 rounded-xl transition-all"
+                  >
+                    Отмена
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Шаг 2: Выбор времени */}
+            {scheduleStep === 'time' && (
+              <>
+                <h2 className="text-xl font-bold text-white mb-2 text-center">🕐 Выберите время</h2>
+                <p className="text-[#6c7883] text-sm mb-6 text-center">
+                  {scheduleDate ? formatDateFull(new Date(scheduleDate)) : ''}
+                </p>
+
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {timeSlots.map(time => {
+                    const isSelected = scheduleTimes.includes(time);
+                    return (
+                      <button
+                        key={time}
+                        onClick={() => handleScheduleTimeToggle(time)}
+                        className={`py-3 px-2 rounded-xl font-medium text-sm transition-all active:scale-95 ${
+                          isSelected
+                            ? 'bg-orange-600 text-white ring-2 ring-orange-400'
+                            : 'bg-[#2b5278] hover:bg-[#326292] text-white'
+                        }`}
+                      >
+                        {time}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex gap-3 sticky bottom-0 pt-4 bg-[#1c2733] border-t border-[#242f3d]">
+                  <button
+                    onClick={() => setScheduleStep('date')}
+                    className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-4 rounded-xl transition-all"
+                  >
+                    ← Назад
+                  </button>
+                  <button
+                    onClick={() => setScheduleStep('details')}
+                    disabled={scheduleTimes.length === 0}
+                    className="flex-1 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-xl transition-all"
+                  >
+                    Далее ({scheduleTimes.length})
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Шаг 3: Детали блокировки */}
+            {scheduleStep === 'details' && (
+              <>
+                <h2 className="text-xl font-bold text-white mb-2 text-center">📝 Детали блокировки</h2>
+                <p className="text-[#6c7883] text-sm mb-6 text-center">
+                  Заблокировано: {scheduleTimes.length} слот(ов)
+                </p>
+
+                <div className="space-y-4 mb-4">
+                  <div className="bg-[#242f3d] rounded-xl p-4">
+                    <div className="text-[#6c7883] text-sm mb-2">Дата:</div>
+                    <div className="text-white font-semibold">{scheduleDate ? formatDateFull(new Date(scheduleDate)) : ''}</div>
+                  </div>
+
+                  <div className="bg-[#242f3d] rounded-xl p-4">
+                    <div className="text-[#6c7883] text-sm mb-2">Время:</div>
+                    <div className="text-white font-semibold flex flex-wrap gap-2">
+                      {scheduleTimes.map(time => (
+                        <span key={time} className="bg-orange-600/20 text-orange-400 px-2 py-1 rounded-lg text-sm">
+                          {time}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Причина:</label>
+                    <input
+                      type="text"
+                      value={scheduleReason}
+                      onChange={(e) => setScheduleReason(e.target.value)}
+                      placeholder="Запись по телефону"
+                      className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Имя клиента:</label>
+                    <input
+                      type="text"
+                      value={scheduleClient.name}
+                      onChange={(e) => setScheduleClient({ ...scheduleClient, name: e.target.value })}
+                      placeholder="Иван"
+                      className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[#6c7883] text-sm mb-2 block">Телефон:</label>
+                    <input
+                      type="tel"
+                      value={scheduleClient.phone}
+                      onChange={(e) => setScheduleClient({ ...scheduleClient, phone: e.target.value })}
+                      placeholder="+7 (999) 000-00-00"
+                      className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 sticky bottom-0 pt-4 bg-[#1c2733] border-t border-[#242f3d]">
+                  <button
+                    onClick={() => setScheduleStep('time')}
+                    className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-4 rounded-xl transition-all"
+                  >
+                    ← Назад
+                  </button>
+                  <button
+                    onClick={handleBlockTime}
+                    className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-4 rounded-xl transition-all"
+                  >
+                    🚫 Заблокировать
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
