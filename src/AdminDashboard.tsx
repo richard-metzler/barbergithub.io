@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTelegram } from './useTelegram';
 import { defaultMasters } from './data';
 
 interface Appointment {
@@ -19,6 +21,8 @@ const mockAppointments: Appointment[] = [
 ];
 
 export function AdminDashboard() {
+  const navigate = useNavigate();
+  const { isTelegram, close } = useTelegram();
   const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
   const [selectedMasterId, setSelectedMasterId] = useState<string>(defaultMasters[0].id);
 
@@ -55,19 +59,30 @@ export function AdminDashboard() {
       
       {/* Header */}
       <div className="bg-[#1c2733] p-6 border-b border-[#242f3d] flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
-        <div>
-          <h1 className="text-2xl font-bold mb-1">Рабочий стол мастера</h1>
-          <p className="text-[#6c7883] text-sm">Управление записями на сегодня</p>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/')}
+            className="text-[#6c7883] hover:text-white transition-colors p-2 rounded-lg hover:bg-[#242f3d]"
+            title="Назад к боту"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold mb-1">Рабочий стол мастера</h1>
+            <p className="text-[#6c7883] text-sm">Управление записями на сегодня</p>
+          </div>
         </div>
-        
+
         <div className="flex gap-2 bg-[#242f3d] p-1 rounded-xl">
-          {masters.map(master => (
+          {defaultMasters.map(master => (
             <button
               key={master.id}
               onClick={() => setSelectedMasterId(master.id)}
               className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                selectedMasterId === master.id 
-                  ? 'bg-blue-600 text-white' 
+                selectedMasterId === master.id
+                  ? 'bg-blue-600 text-white'
                   : 'text-[#8b9bb4] hover:bg-[#34465d]'
               }`}
             >

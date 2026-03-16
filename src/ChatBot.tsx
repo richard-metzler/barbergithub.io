@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   services, defaultMasters, getAvailableSlots, getNextDays, formatDate, formatDateFull,
   type Service, type Master,
@@ -21,6 +22,7 @@ function createMsg(text: string, sender: 'bot' | 'user', widget?: Step): Message
 }
 
 export function ChatBot() {
+  const navigate = useNavigate();
   const { init, getUserName, getUserId, hapticFeedback, sendData, close, isTelegram } = useTelegram();
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -476,11 +478,17 @@ export function ChatBot() {
               <div className="mt-2 animate-fade-in-up">
                 <button
                   onClick={() => {
-                    const adminUrl = `${window.location.origin}/admin`;
                     if (isTelegram && window.Telegram?.WebApp) {
-                      window.Telegram.WebApp.openLink(adminUrl);
+                      // В Telegram используем MainButton для перехода
+                      window.Telegram.WebApp.MainButton.setText('⬅️ Вернуться к записи');
+                      window.Telegram.WebApp.MainButton.onClick(() => {
+                        navigate('/');
+                        window.Telegram.WebApp.MainButton.hide();
+                      });
+                      window.Telegram.WebApp.MainButton.show();
+                      navigate('/admin');
                     } else {
-                      window.open(adminUrl, '_blank');
+                      navigate('/admin');
                     }
                   }}
                   className="w-full bg-[#2b5278] hover:bg-[#326292] text-white font-semibold py-3 rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2"
