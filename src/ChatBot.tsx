@@ -37,6 +37,7 @@ export function ChatBot() {
   const [isTyping, setIsTyping] = useState(false);
   const [masters, setMasters] = useState<Master[]>(defaultMasters);
   const [isMaster, setIsMaster] = useState(false);
+  const adminButtonShownRef = useRef(false);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -44,7 +45,8 @@ export function ChatBot() {
   // Проверка, является ли пользователь мастером
   useEffect(() => {
     const userId = getUserId();
-    if (userId && !isMaster) {
+    if (userId && !isMaster && !adminButtonShownRef.current) {
+      adminButtonShownRef.current = true;
       const API_URL = (import.meta as any).env?.VITE_API_URL || window.location.origin;
       fetch(`${API_URL}/api/masters`)
         .then(r => r.json())
