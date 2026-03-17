@@ -212,56 +212,63 @@ export function AdminDashboard() {
 
     try {
       // Блокируем каждое выбранное время
-      const results = [];
-      const errors = [];
+      const successTimes = [];
+      const blockedTimes = [];
+      const errorTimes = [];
       
       for (const time of scheduleTimes) {
-        const response = await fetch(`${API_URL}/api/schedule`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            master_id: masterId,
-            date: scheduleDate,
-            time,
-            reason: scheduleReason || 'Запись по телефону',
-            client_name: scheduleClient.name || 'Запись по телефону',
-            client_phone: scheduleClient.phone || '',
-            created_by: userId,
-          }),
-        });
+        try {
+          const response = await fetch(`${API_URL}/api/schedule`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              master_id: masterId,
+              date: scheduleDate,
+              time,
+              reason: scheduleReason || 'Запись по телефону',
+              client_name: scheduleClient.name || 'Запись по телефону',
+              client_phone: scheduleClient.phone || '',
+              created_by: userId,
+            }),
+          });
 
-        const result = await response.json();
-        
-        if (!response.ok) {
-          if (result.error && result.error.includes('already exists')) {
-            // Время уже заблокировано - пропускаем
-            errors.push(`${time} (уже заблокировано)`);
+          const result = await response.json();
+          
+          if (!response.ok) {
+            if (result.error && result.error.includes('already exists')) {
+              blockedTimes.push(time);
+            } else {
+              errorTimes.push(`${time}: ${result.error}`);
+            }
             continue;
           }
-          console.error('Schedule API error:', result);
-          throw new Error(result.error || 'Ошибка при блокировке');
+          
+          successTimes.push(time);
+        } catch (err: any) {
+          errorTimes.push(`${time}: ${err.message}`);
         }
-        
-        results.push(result);
       }
 
       // Формируем сообщение
-      let successMessage = '';
-      if (results.length > 0) {
-        successMessage = `✅ Заблокировано: ${scheduleTimes.filter(t => !errors.includes(t + ' (уже заблокировано)')).join(', ')}`;
+      const messages = [];
+      if (successTimes.length > 0) {
+        messages.push(`✅ Заблокировано: ${successTimes.join(', ')}`);
       }
-      if (errors.length > 0) {
-        successMessage += `\n⚠️ Уже заблокировано: ${errors.join(', ')}`;
+      if (blockedTimes.length > 0) {
+        messages.push(`⚠️ Уже заблокировано: ${blockedTimes.join(', ')}`);
       }
-
-      alert(successMessage);
+      if (errorTimes.length > 0) {
+        messages.push(`❌ Ошибки: ${errorTimes.join(', ')}`);
+      }
+      
+      alert(messages.join('\n') || '⚠️ Ни одно время не было заблокировано');
       setShowScheduleModal(false);
       setScheduleStep('date');
       setScheduleDate('');
       setScheduleTimes([]);
       setScheduleReason('');
       setScheduleClient({ name: '', phone: '' });
-      loadData();
+      loadBookings(masterId);
     } catch (error: any) {
       console.error('Block time error:', error);
       alert('❌ Ошибка блокировки: ' + error.message);
