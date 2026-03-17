@@ -41,6 +41,7 @@ export function AdminDashboard() {
   const [scheduleStep, setScheduleStep] = useState<'date' | 'time' | 'details'>('date');
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleTimes, setScheduleTimes] = useState<string[]>([]);
+  const [blockedScheduleTimes, setBlockedScheduleTimes] = useState<string[]>([]);
   const [scheduleReason, setScheduleReason] = useState('');
   const [scheduleClient, setScheduleClient] = useState({ name: '', phone: '' });
 
@@ -71,8 +72,25 @@ export function AdminDashboard() {
 
   // Обработка выбора даты для блокировки
   const handleScheduleDateSelect = (date: Date) => {
-    setScheduleDate(date.toISOString().slice(0, 10));
-    setScheduleStep('time');
+    const dateStr = date.toISOString().slice(0, 10);
+    setScheduleDate(dateStr);
+    setScheduleTimes([]);
+    // Загружаем уже заблокированные слоты для этой даты
+    loadBlockedTimes(dateStr);
+  };
+
+  // Загрузка заблокированных слотов
+  const loadBlockedTimes = async (date: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/schedule?master_id=${masterId}&date=${date}`);
+      const data = await response.json();
+      const blockedTimes = (data.schedule || []).map((s: any) => s.time);
+      setBlockedScheduleTimes(blockedTimes);
+      console.log('Loaded blocked times:', blockedTimes);
+    } catch (err) {
+      console.error('Error loading blocked times:', err);
+      setBlockedScheduleTimes([]);
+    }
   };
 
   // Обработка выбора времени для блокировки
@@ -526,17 +544,24 @@ export function AdminDashboard() {
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   {timeSlots.map(time => {
                     const isSelected = scheduleTimes.includes(time);
+                    const isBlocked = blockedScheduleTimes.includes(time);
                     return (
                       <button
                         key={time}
-                        onClick={() => handleScheduleTimeToggle(time)}
+                        onClick={() => !isBlocked && handleScheduleTimeToggle(time)}
+                        disabled={isBlocked}
                         className={`py-3 px-2 rounded-xl font-medium text-sm transition-all active:scale-95 ${
-                          isSelected
+                          isBlocked
+                            ? 'bg-[#242f3d] text-[#4a5a6a] cursor-not-allowed line-through'
+                            : isSelected
                             ? 'bg-orange-600 text-white ring-2 ring-orange-400'
                             : 'bg-[#2b5278] hover:bg-[#326292] text-white'
                         }`}
                       >
                         {time}
+                        {isBlocked && (
+                          <span className="block text-[10px] mt-1">🚫</span>
+                        )}
                       </button>
                     );
                   })}
@@ -544,7 +569,10 @@ export function AdminDashboard() {
 
                 <div className="flex gap-3 sticky bottom-0 pt-4 bg-[#1c2733] border-t border-[#242f3d]">
                   <button
-                    onClick={() => setScheduleStep('date')}
+                    onClick={() => {
+                      setScheduleStep('date');
+                      setBlockedScheduleTimes([]);
+                    }}
                     className="flex-1 bg-[#242f3d] hover:bg-[#2b3848] text-white font-semibold py-4 rounded-xl transition-all"
                   >
                     ← Назад
@@ -557,6 +585,19 @@ export function AdminDashboard() {
                     Далее ({scheduleTimes.length})
                   </button>
                 </div>
+
+                {blockedScheduleTimes.length > 0 && (
+                  <div className="mt-4 p-3 bg-[#242f3d] rounded-xl border border-[#313f50]">
+                    <div className="text-[#6c7883] text-xs mb-2">🚫 Уже заблокировано:</div>
+                    <div className="text-white text-sm flex flex-wrap gap-2">
+                      {blockedScheduleTimes.map(time => (
+                        <span key={time} className="bg-red-600/20 text-red-400 px-2 py-1 rounded-lg text-xs">
+                          {time}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
