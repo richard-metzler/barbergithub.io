@@ -213,6 +213,8 @@ export function AdminDashboard() {
     try {
       // Блокируем каждое выбранное время
       const results = [];
+      const errors = [];
+      
       for (const time of scheduleTimes) {
         const response = await fetch(`${API_URL}/api/schedule`, {
           method: 'POST',
@@ -231,6 +233,11 @@ export function AdminDashboard() {
         const result = await response.json();
         
         if (!response.ok) {
+          if (result.error && result.error.includes('already exists')) {
+            // Время уже заблокировано - пропускаем
+            errors.push(`${time} (уже заблокировано)`);
+            continue;
+          }
           console.error('Schedule API error:', result);
           throw new Error(result.error || 'Ошибка при блокировке');
         }
@@ -238,7 +245,16 @@ export function AdminDashboard() {
         results.push(result);
       }
 
-      alert(`✅ Заблокировано время: ${scheduleTimes.join(', ')}`);
+      // Формируем сообщение
+      let successMessage = '';
+      if (results.length > 0) {
+        successMessage = `✅ Заблокировано: ${scheduleTimes.filter(t => !errors.includes(t + ' (уже заблокировано)')).join(', ')}`;
+      }
+      if (errors.length > 0) {
+        successMessage += `\n⚠️ Уже заблокировано: ${errors.join(', ')}`;
+      }
+
+      alert(successMessage);
       setShowScheduleModal(false);
       setScheduleStep('date');
       setScheduleDate('');
