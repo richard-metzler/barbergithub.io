@@ -318,6 +318,8 @@ export function AdminDashboard() {
   const [showScheduleView, setShowScheduleView] = useState(false);
   const [viewScheduleDate, setViewScheduleDate] = useState(new Date().toISOString().slice(0, 10));
   const [viewScheduleSlots, setViewScheduleSlots] = useState<any[]>([]);
+  const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [monthSchedule, setMonthSchedule] = useState<{[key: string]: {blocked: number, bookings: number}}>({});
 
   // Загрузка расписания на дату
   const loadScheduleForDate = async (date: string) => {
@@ -331,12 +333,48 @@ export function AdminDashboard() {
     }
   };
 
+  // Загрузка расписания на месяц
+  const loadMonthSchedule = async (yearMonth: string) => {
+    try {
+      const [year, month] = yearMonth.split('-').map(Number);
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const scheduleData: {[key: string]: {blocked: number, bookings: number}} = {};
+
+      // Загружаем каждый день месяца
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${yearMonth}-${String(day).padStart(2, '0')}`;
+        const response = await fetch(`${API_URL}/api/schedule?master_id=${masterId}&date=${dateStr}`);
+        const data = await response.json();
+        const slots = data.schedule || [];
+        
+        scheduleData[dateStr] = {
+          blocked: slots.filter((s: any) => s.is_blocked).length,
+          bookings: slots.filter((s: any) => !s.is_blocked).length
+        };
+      }
+      
+      setMonthSchedule(scheduleData);
+    } catch (err) {
+      console.error('Error loading month schedule:', err);
+      setMonthSchedule({});
+    }
+  };
+
   // Загрузка расписания при открытии
   useEffect(() => {
     if (showScheduleView && masterId) {
       loadScheduleForDate(viewScheduleDate);
+      loadMonthSchedule(currentMonth);
     }
-  }, [showScheduleView, viewScheduleDate, masterId]);
+  }, [showScheduleView, viewScheduleDate, currentMonth, masterId]);
+
+  // Навигация по месяцам
+  const changeMonth = (delta: number) => {
+    const [year, month] = currentMonth.split('-').map(Number);
+    const newDate = new Date(year, month - 1 + delta, 1);
+    const newYearMonth = newDate.toISOString().slice(0, 7);
+    setCurrentMonth(newYearMonth);
+  };
 
   if (loading) {
     return (
@@ -729,97 +767,192 @@ export function AdminDashboard() {
               </button>
             </div>
 
-            {/* Выбор даты */}
-            <div className="mb-6">
-              <label className="text-[#6c7883] text-sm mb-2 block">Дата:</label>
-              <input
-                type="date"
-                value={viewScheduleDate}
-                onChange={(e) => setViewScheduleDate(e.target.value)}
-                className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            {/* Навигация по месяцам */}
+            <div className="flex items-center justify-between mb-4">
+              <button
+                onClick={() => changeMonth(-1)}
+                className="text-[#6c7883] hover:text-white p-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="m15 18-6-6 6-6"/>
+                </svg>
+              </button>
+              <h3 className="text-white font-bold text-lg capitalize">
+                {new Date(currentMonth + '-01').toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}
+              </h3>
+              <button
+                onClick={() => changeMonth(1)}
+                className="text-[#6c7883] hover:text-white p-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="m9 18 6-6-6-6"/>
+                </svg>
+              </button>
             </div>
 
-            {/* Занятые слоты */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-white font-semibold">Занято:</span>
-                <span className="text-[#6c7883] text-sm">{viewScheduleSlots.length} слот(ов)</span>
-              </div>
+            {/* Дни недели */}
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(day => (
+                <div key={day} className="text-center text-[#6c7883] text-xs py-2">{day}</div>
+              ))}
+            </div>
 
-              {viewScheduleSlots.length === 0 ? (
+            {/* Календарь месяца */}
+            <div className="grid grid-cols-7 gap-1 mb-6">
+              {(() => {
+                const [year, month] = currentMonth.split('-').map(Number);
+                const daysInMonth = new Date(year, month, 0).getDate();
+                const firstDay = new Date(year, month - 1, 1).getDay();
+                const paddingDays = firstDay === 0 ? 6 : firstDay - 1;
+                const days = [];
+
+                // Пустые ячейки до начала месяца
+                for (let i = 0; i < paddingDays; i++) {
+                  days.push(<div key={`empty-${i}`} className="aspect-square"></div>);
+                }
+
+                // Дни месяца
+                for (let day = 1; day <= daysInMonth; day++) {
+                  const dateStr = `${currentMonth}-${String(day).padStart(2, '0')}`;
+                  const schedule = monthSchedule[dateStr] || { blocked: 0, bookings: 0 };
+                  const isToday = dateStr === new Date().toISOString().slice(0, 10);
+                  const isSelected = dateStr === viewScheduleDate;
+
+                  // Определяем цвет плитки
+                  let bgColor = 'bg-[#242f3d]';
+                  let borderColor = 'border-transparent';
+                  if (schedule.blocked > 0 && schedule.bookings > 0) {
+                    bgColor = 'bg-gradient-to-br from-red-600/50 to-blue-600/50';
+                    borderColor = 'border-red-500 border-blue-500';
+                  } else if (schedule.blocked > 0) {
+                    bgColor = 'bg-red-600/30';
+                    borderColor = 'border-red-500';
+                  } else if (schedule.bookings > 0) {
+                    bgColor = 'bg-blue-600/30';
+                    borderColor = 'border-blue-500';
+                  }
+                  if (isSelected) {
+                    borderColor = 'border-orange-500 border-2';
+                  }
+
+                  days.push(
+                    <button
+                      key={day}
+                      onClick={() => setViewScheduleDate(dateStr)}
+                      className={`aspect-square rounded-lg ${bgColor} border ${borderColor} flex flex-col items-center justify-center transition-all active:scale-95 ${
+                        isToday ? 'ring-2 ring-white' : ''
+                      }`}
+                    >
+                      <span className={`text-sm font-semibold ${
+                        schedule.blocked > 0 || schedule.bookings > 0 ? 'text-white' : 'text-[#6c7883]'
+                      }`}>
+                        {day}
+                      </span>
+                      {(schedule.blocked > 0 || schedule.bookings > 0) && (
+                        <span className="text-[8px] leading-none mt-0.5">
+                          {schedule.blocked > 0 && schedule.bookings > 0 && '🔴🔵'}
+                          {schedule.blocked > 0 && schedule.bookings === 0 && '🔴'}
+                          {schedule.blocked === 0 && schedule.bookings > 0 && '🔵'}
+                        </span>
+                      )}
+                    </button>
+                  );
+                }
+
+                return days;
+              })()}
+            </div>
+
+            {/* Легенда */}
+            <div className="flex gap-4 mb-4 text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-red-600/30 border border-red-500"></div>
+                <span className="text-[#6c7883]">Заблокировано</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-blue-600/30 border border-blue-500"></div>
+                <span className="text-[#6c7883]">Запись</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-gradient-to-br from-red-600/50 to-blue-600/50 border border-red-500 border-blue-500"></div>
+                <span className="text-[#6c7883]">Оба</span>
+              </div>
+            </div>
+
+            {/* Выбранная дата - детали */}
+            <div className="border-t border-[#242f3d] pt-4">
+              <h4 className="text-white font-semibold mb-3">
+                {viewScheduleDate ? formatDateFull(new Date(viewScheduleDate)) : 'Выберите дату'}
+              </h4>
+
+              {/* Заблокированные слоты */}
+              {viewScheduleSlots.filter((s: any) => s.is_blocked).length > 0 && (
+                <div className="mb-4">
+                  <div className="text-[#6c7883] text-xs mb-2">🚫 Заблокировано:</div>
+                  <div className="space-y-2">
+                    {viewScheduleSlots.filter((s: any) => s.is_blocked).map((slot: any) => (
+                      <div key={slot.id} className="bg-red-600/20 border border-red-600/30 rounded-xl p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-lg bg-red-600/30 flex items-center justify-center font-bold text-red-400">
+                              {slot.time}
+                            </div>
+                            <div>
+                              <div className="text-white text-sm font-semibold">{slot.reason || 'Заблокировано'}</div>
+                              {slot.client_name && (
+                                <div className="text-[#6c7883] text-xs">{slot.client_name}</div>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={async () => {
+                              if (!confirm('Разблокировать это время?')) return;
+                              await fetch(`${API_URL}/api/schedule?id=${slot.id}`, { method: 'DELETE' });
+                              loadScheduleForDate(viewScheduleDate);
+                              loadMonthSchedule(currentMonth);
+                            }}
+                            className="text-[#6c7883] hover:text-red-400 p-2"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Записи клиентов */}
+              {appointments.filter(a => a.date === viewScheduleDate && !a.is_cancelled).length > 0 && (
+                <div>
+                  <div className="text-[#6c7883] text-xs mb-2">✏️ Записи клиентов:</div>
+                  <div className="space-y-2">
+                    {appointments.filter(a => a.date === viewScheduleDate && !a.is_cancelled).map((app) => (
+                      <div key={app.id} className="bg-blue-600/20 border border-blue-600/30 rounded-xl p-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-lg bg-blue-600/30 flex items-center justify-center font-bold text-blue-400">
+                            {app.time}
+                          </div>
+                          <div>
+                            <div className="text-white text-sm font-semibold">{app.client_name}</div>
+                            <div className="text-[#6c7883] text-xs">{app.service}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {viewScheduleSlots.filter((s: any) => s.is_blocked).length === 0 && 
+               appointments.filter(a => a.date === viewScheduleDate && !a.is_cancelled).length === 0 && (
                 <div className="text-center text-[#6c7883] py-8">
                   <div className="text-4xl mb-2">📭</div>
                   <div>На эту дату записей нет</div>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {viewScheduleSlots.map((slot: any) => (
-                    <div
-                      key={slot.id}
-                      className={`bg-[#242f3d] rounded-xl p-4 flex items-center justify-between ${
-                        slot.is_blocked ? 'border border-red-600/30' : 'border border-blue-600/30'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-16 h-16 rounded-xl flex items-center justify-center font-bold text-lg ${
-                          slot.is_blocked
-                            ? 'bg-red-600/20 text-red-400'
-                            : 'bg-blue-600/20 text-blue-400'
-                        }`}>
-                          {slot.time}
-                        </div>
-                        <div>
-                          <div className="text-white font-semibold">
-                            {slot.is_blocked ? '🚫 Заблокировано' : '✏️ Запись'}
-                          </div>
-                          {slot.client_name && (
-                            <div className="text-[#6c7883] text-sm">{slot.client_name}</div>
-                          )}
-                          {slot.reason && (
-                            <div className="text-[#6c7883] text-xs">{slot.reason}</div>
-                          )}
-                        </div>
-                      </div>
-                      {slot.is_blocked && (
-                        <button
-                          onClick={async () => {
-                            if (!confirm('Разблокировать это время?')) return;
-                            await fetch(`${API_URL}/api/schedule?id=${slot.id}`, { method: 'DELETE' });
-                            loadScheduleForDate(viewScheduleDate);
-                          }}
-                          className="text-[#6c7883] hover:text-red-400 p-2"
-                          title="Разблокировать"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
               )}
-
-              {/* Показываем обычные записи из appointments */}
-              {appointments
-                .filter(a => a.date === viewScheduleDate && !a.is_cancelled)
-                .map((app) => (
-                  <div
-                    key={app.id}
-                    className="bg-[#242f3d] rounded-xl p-4 flex items-center justify-between border border-blue-600/30"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-16 h-16 rounded-xl flex items-center justify-center font-bold text-lg bg-blue-600/20 text-blue-400">
-                        {app.time}
-                      </div>
-                      <div>
-                        <div className="text-white font-semibold">✏️ {app.client_name}</div>
-                        <div className="text-[#6c7883] text-sm">{app.service}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
             </div>
           </div>
         </div>
