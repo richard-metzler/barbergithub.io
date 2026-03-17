@@ -75,6 +75,7 @@ export function AdminDashboard() {
     const dateStr = date.toISOString().slice(0, 10);
     setScheduleDate(dateStr);
     setScheduleTimes([]);
+    setScheduleStep('time'); // Переключаемся на шаг выбора времени
     // Загружаем уже заблокированные слоты для этой даты
     loadBlockedTimes(dateStr);
   };
