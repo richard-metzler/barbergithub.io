@@ -314,6 +314,30 @@ export function AdminDashboard() {
     .filter(a => a.status === 'completed')
     .reduce((sum, a) => sum + (a.service_price || 0), 0);
 
+  // Расписание (просмотр)
+  const [showScheduleView, setShowScheduleView] = useState(false);
+  const [viewScheduleDate, setViewScheduleDate] = useState(new Date().toISOString().slice(0, 10));
+  const [viewScheduleSlots, setViewScheduleSlots] = useState<any[]>([]);
+
+  // Загрузка расписания на дату
+  const loadScheduleForDate = async (date: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/schedule?master_id=${masterId}&date=${date}`);
+      const data = await response.json();
+      setViewScheduleSlots(data.schedule || []);
+    } catch (err) {
+      console.error('Error loading schedule:', err);
+      setViewScheduleSlots([]);
+    }
+  };
+
+  // Загрузка расписания при открытии
+  useEffect(() => {
+    if (showScheduleView && masterId) {
+      loadScheduleForDate(viewScheduleDate);
+    }
+  }, [showScheduleView, viewScheduleDate, masterId]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0e1621] flex items-center justify-center">
@@ -367,8 +391,16 @@ export function AdminDashboard() {
           Заблокировать время (запись по телефону)
         </button>
 
-        {/* Schedule */}
-        <h2 className="text-white font-bold mb-3">📅 Расписание</h2>
+        {/* Schedule - активный заголовок */}
+        <button
+          onClick={() => setShowScheduleView(true)}
+          className="w-full text-left mb-3 group"
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-white font-bold group-hover:text-blue-400 transition-colors">📅 Расписание</h2>
+            <span className="text-[#6c7883] group-hover:text-blue-400 transition-colors text-sm">Посмотреть календарь →</span>
+          </div>
+        </button>
 
         {appointments.length === 0 ? (
           <div className="text-center text-[#6c7883] py-12">
@@ -677,6 +709,118 @@ export function AdminDashboard() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Schedule View Modal - Просмотр расписания */}
+      {showScheduleView && (
+        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+          <div className="bg-[#1c2733] rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md border-b sm:border border-[#242f3d] mb-safe max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white">📅 Расписание</h2>
+              <button
+                onClick={() => setShowScheduleView(false)}
+                className="text-[#6c7883] hover:text-white p-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Выбор даты */}
+            <div className="mb-6">
+              <label className="text-[#6c7883] text-sm mb-2 block">Дата:</label>
+              <input
+                type="date"
+                value={viewScheduleDate}
+                onChange={(e) => setViewScheduleDate(e.target.value)}
+                className="w-full bg-[#242f3d] text-white px-3 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Занятые слоты */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-white font-semibold">Занято:</span>
+                <span className="text-[#6c7883] text-sm">{viewScheduleSlots.length} слот(ов)</span>
+              </div>
+
+              {viewScheduleSlots.length === 0 ? (
+                <div className="text-center text-[#6c7883] py-8">
+                  <div className="text-4xl mb-2">📭</div>
+                  <div>На эту дату записей нет</div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {viewScheduleSlots.map((slot: any) => (
+                    <div
+                      key={slot.id}
+                      className={`bg-[#242f3d] rounded-xl p-4 flex items-center justify-between ${
+                        slot.is_blocked ? 'border border-red-600/30' : 'border border-blue-600/30'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-16 h-16 rounded-xl flex items-center justify-center font-bold text-lg ${
+                          slot.is_blocked
+                            ? 'bg-red-600/20 text-red-400'
+                            : 'bg-blue-600/20 text-blue-400'
+                        }`}>
+                          {slot.time}
+                        </div>
+                        <div>
+                          <div className="text-white font-semibold">
+                            {slot.is_blocked ? '🚫 Заблокировано' : '✏️ Запись'}
+                          </div>
+                          {slot.client_name && (
+                            <div className="text-[#6c7883] text-sm">{slot.client_name}</div>
+                          )}
+                          {slot.reason && (
+                            <div className="text-[#6c7883] text-xs">{slot.reason}</div>
+                          )}
+                        </div>
+                      </div>
+                      {slot.is_blocked && (
+                        <button
+                          onClick={async () => {
+                            if (!confirm('Разблокировать это время?')) return;
+                            await fetch(`${API_URL}/api/schedule?id=${slot.id}`, { method: 'DELETE' });
+                            loadScheduleForDate(viewScheduleDate);
+                          }}
+                          className="text-[#6c7883] hover:text-red-400 p-2"
+                          title="Разблокировать"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Показываем обычные записи из appointments */}
+              {appointments
+                .filter(a => a.date === viewScheduleDate && !a.is_cancelled)
+                .map((app) => (
+                  <div
+                    key={app.id}
+                    className="bg-[#242f3d] rounded-xl p-4 flex items-center justify-between border border-blue-600/30"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-16 h-16 rounded-xl flex items-center justify-center font-bold text-lg bg-blue-600/20 text-blue-400">
+                        {app.time}
+                      </div>
+                      <div>
+                        <div className="text-white font-semibold">✏️ {app.client_name}</div>
+                        <div className="text-[#6c7883] text-sm">{app.service}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
           </div>
         </div>
       )}
